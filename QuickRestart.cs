@@ -166,26 +166,8 @@ namespace Booth
                 List<TMPro.TextMeshProUGUI> buttonText = new List<TMPro.TextMeshProUGUI>();
                 CreateText(buttonText, button, new Color(1, 1, 1, 1), 24, 0, new Vector2(12, 4), new Vector2(-12, -4), "Restart");
 
-
                 // Place our button above the pause menu buttons
                 button.transform.SetAsFirstSibling();
-                Logger.LogMessage("options panel rect: " + self.mainPanel.GetChild(0).GetComponent<RectTransform>().rect);
-                Logger.LogMessage("Main panel position: " + self.mainPanel.transform.position);
-                Logger.LogMessage("Main panel anchor min: " + self.mainPanel.anchorMin);
-                Logger.LogMessage("Button panel anchor max: " + button.GetComponent<RectTransform>().anchorMax);
-                Logger.LogMessage("Button panel anchor min: " + button.GetComponent<RectTransform>().anchorMin);
-                Logger.LogMessage("Main panel anchor max: " + self.mainPanel.anchorMax);
-                Logger.LogMessage("Button position: " + button.transform.position);
-                Logger.LogMessage("Button lossy scale: " + button.transform.lossyScale);
-                Logger.LogMessage("Button rect: " + button.GetComponent<RectTransform>().rect);
-
-                Transform optionsPanel = self.mainPanel.GetChild(0);
-                for (int i = 0; i < optionsPanel.childCount; i++)
-                {
-                    Logger.LogMessage("Child " + i + ": " + optionsPanel.GetChild(i));
-                }
-
-
 
                 // Set up what to do when the button is clicked
                 button.GetComponent<RoR2.UI.HGButton>().onClick.AddListener(() => {
@@ -198,7 +180,6 @@ namespace Booth
                         UnityEngine.Object.Destroy(Run.instance.gameObject);//CCRunEnd
                     }
                     
-
                     // Start a new game, but wait a bit before we do so the PreGameController has time to get created
                     // We do this on another thread since this method is running on the same thread as UI
                     ThreadStart work = StartNewGame;
