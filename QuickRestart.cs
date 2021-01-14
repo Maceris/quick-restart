@@ -13,7 +13,7 @@ namespace Booth
 {
 
     [BepInDependency("com.bepis.r2api")]
-    [BepInPlugin("com.IkalaGaming.QuickRestart", "Quick Restart", "1.0.0")]
+    [BepInPlugin("com.IkalaGaming.QuickRestart", "QuickRestart", "1.0.0")]
     [R2APISubmoduleDependency(nameof(ResourcesAPI))]
     public class QuickRestart : BaseUnityPlugin
     {
@@ -50,8 +50,9 @@ namespace Booth
             // Used to set the size of the button
             RectTransform buttonTransform = button.GetComponent<RectTransform>();
             buttonTransform.pivot = new Vector2(0, 0);
-            buttonTransform.anchorMin = new Vector2(0, 1);
-            buttonTransform.anchorMax = new Vector2(0, 1);
+            buttonTransform.anchorMin = new Vector2(0.5f, 0.5f);
+            buttonTransform.anchorMax = new Vector2(0.5f, 0.5f);
+            buttonTransform.anchoredPosition = new Vector2(0.5f, 0.5f);
             buttonTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, size.x);
             buttonTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, size.y);
             buttonTransform.localScale = new Vector3(1, 1, 1);
@@ -123,7 +124,6 @@ namespace Booth
                 ResourcesAPI.AddProvider(provider);
             }
 
-            Vector2 buttonSize = new Vector2(320, 48);
 
             // Set up textures for the UI button
             Texture2D buttonTexture = Resources.Load<Texture2D>("@Booth:Assets/Texture2D/texUICleanButton.png");
@@ -145,9 +145,10 @@ namespace Booth
 
             //Add restart button to the pause screen
             On.RoR2.UI.PauseScreenController.Awake += (orig, self) => {
-                
 
-                GameObject button = CreateButton(self.mainPanel.gameObject, buttonSize, buttonSprite);
+                //Vector2 buttonSize = new Vector2(320, 48);
+                Vector2 buttonSize = new Vector2(320, 48);
+                GameObject button = CreateButton(self.mainPanel.GetChild(0).gameObject, buttonSize, buttonSprite);
 
                 // Add in the stylized highlight/border
                 List<Image> images = new List<Image>();
@@ -165,9 +166,26 @@ namespace Booth
                 List<TMPro.TextMeshProUGUI> buttonText = new List<TMPro.TextMeshProUGUI>();
                 CreateText(buttonText, button, new Color(1, 1, 1, 1), 24, 0, new Vector2(12, 4), new Vector2(-12, -4), "Restart");
 
+
                 // Place our button above the pause menu buttons
-                button.transform.SetSiblingIndex(self.transform.GetSiblingIndex());
-                button.transform.position = new Vector3(self.mainPanel.transform.position.x - buttonSize.x / 2, self.mainPanel.transform.position.y - self.mainPanel.rect.y - 20, 0);
+                button.transform.SetAsFirstSibling();
+                Logger.LogMessage("options panel rect: " + self.mainPanel.GetChild(0).GetComponent<RectTransform>().rect);
+                Logger.LogMessage("Main panel position: " + self.mainPanel.transform.position);
+                Logger.LogMessage("Main panel anchor min: " + self.mainPanel.anchorMin);
+                Logger.LogMessage("Button panel anchor max: " + button.GetComponent<RectTransform>().anchorMax);
+                Logger.LogMessage("Button panel anchor min: " + button.GetComponent<RectTransform>().anchorMin);
+                Logger.LogMessage("Main panel anchor max: " + self.mainPanel.anchorMax);
+                Logger.LogMessage("Button position: " + button.transform.position);
+                Logger.LogMessage("Button lossy scale: " + button.transform.lossyScale);
+                Logger.LogMessage("Button rect: " + button.GetComponent<RectTransform>().rect);
+
+                Transform optionsPanel = self.mainPanel.GetChild(0);
+                for (int i = 0; i < optionsPanel.childCount; i++)
+                {
+                    Logger.LogMessage("Child " + i + ": " + optionsPanel.GetChild(i));
+                }
+
+
 
                 // Set up what to do when the button is clicked
                 button.GetComponent<RoR2.UI.HGButton>().onClick.AddListener(() => {
@@ -175,7 +193,11 @@ namespace Booth
                     self.InvokeMethod("OnDisable");
                     UnityEngine.Object.Destroy(self.gameObject);
 
-                    UnityEngine.Object.Destroy(Run.instance.gameObject);//CCRunEnd
+                    if (!(Run.instance is null || Run.instance.gameObject is null))
+                    {
+                        UnityEngine.Object.Destroy(Run.instance.gameObject);//CCRunEnd
+                    }
+                    
 
                     // Start a new game, but wait a bit before we do so the PreGameController has time to get created
                     // We do this on another thread since this method is running on the same thread as UI
@@ -190,7 +212,10 @@ namespace Booth
         private void StartNewGame()
         {
             System.Threading.Thread.Sleep(1000);
-            PreGameController.instance.InvokeMethod("StartLaunch");
+            if (!(PreGameController.instance is null))
+            {
+                PreGameController.instance.InvokeMethod("StartRun");
+            }
         }
 
     }
