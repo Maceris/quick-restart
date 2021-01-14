@@ -13,7 +13,7 @@ namespace Booth
 {
 
     [BepInDependency("com.bepis.r2api")]
-    [BepInPlugin("com.IkalaGaming.QuickRestart", "QuickRestart", "1.0.0")]
+    [BepInPlugin("com.IkalaGaming.QuickRestart", "QuickRestart", "1.1.1")]
     [R2APISubmoduleDependency(nameof(ResourcesAPI))]
     public class QuickRestart : BaseUnityPlugin
     {
@@ -123,7 +123,6 @@ namespace Booth
                 var provider = new AssetBundleResourcesProvider("@Booth", bundle);
                 ResourcesAPI.AddProvider(provider);
             }
-
 
             // Set up textures for the UI button
             Texture2D buttonTexture = Resources.Load<Texture2D>("@Booth:Assets/Texture2D/texUICleanButton.png");
