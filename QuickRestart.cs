@@ -195,7 +195,7 @@ namespace Booth
             System.Threading.Thread.Sleep(1000);
             if (!(PreGameController.instance is null))
             {
-                PreGameController.instance.InvokeMethod("StartRun");
+                PreGameController.instance.InvokeMethod("StartRun");//CCPregameStartRun
             }
         }
 
