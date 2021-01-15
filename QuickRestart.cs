@@ -49,12 +49,36 @@ namespace Booth
             "The key that has to be pressed to reset"
             );
 
+            // Convert the keybind to a real key code, falling back to default if there are issues
+            try
+            {
+                ResetKeyCode = (KeyCode) Enum.Parse(typeof(KeyCode), ConfigResetKeyBind.Value);
+            }
+            catch (Exception e)
+            {
+                ResetKeyCode = KeyCode.T;
+            }
+
             ConfigResetKeyHoldTime = Config.Bind<int>(
             "Keybind",
             "ResetKeyHoldTime",
             1000,
             "The number of ms that the reset key has to be held in order to reset. Divide by 1000 to get seconds"
             );
+        }
+
+        void HandleResetKey()
+        {
+
+        }
+
+        void Update()
+        {
+            if (ConfigResetKeyEnabled.Value)
+            {
+                // Done this way so we can have other things in the update function
+                HandleResetKey();
+            }
         }
 
         public void Awake()
@@ -133,6 +157,8 @@ namespace Booth
         public static ConfigEntry<String> ConfigResetKeyBind { get; set; }
         public static ConfigEntry<int> ConfigResetKeyHoldTime { get; set; }
         public static ConfigEntry<bool> ConfigConfirmationDialog { get; set; }
+
+        public static KeyCode ResetKeyCode;
 
     }
 
