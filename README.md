@@ -8,6 +8,12 @@ This was tested and working on at least these builds:
 
 # Changelog
 
+**1.3.0**
+
+* Add config option to enable pressing a button to restart, changing the keybind, and how long it needs to be held
+* Add config option to put the button wherever you want on the pause menu
+* Add config option to enable a confirmation dialog upon trying to restart
+
 **1.2.2**
 
 * Moved button to the bottom after complaints (even from the developer) of accidentally hitting restart instead of resume
