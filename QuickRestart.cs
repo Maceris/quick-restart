@@ -13,7 +13,7 @@ namespace Booth
 {
 
     [BepInDependency("com.bepis.r2api")]
-    [BepInPlugin("com.IkalaGaming.QuickRestart", "QuickRestart", "1.2.0")]
+    [BepInPlugin("com.IkalaGaming.QuickRestart", "QuickRestart", "1.2.1")]
     [R2APISubmoduleDependency(nameof(ResourcesAPI))]
     public class QuickRestart : BaseUnityPlugin
     {
@@ -145,7 +145,7 @@ namespace Booth
 
             //Add restart button to the pause screen
             On.RoR2.UI.PauseScreenController.Awake += (orig, self) => {
-
+                orig(self);
                 //Vector2 buttonSize = new Vector2(320, 48);
                 Vector2 buttonSize = new Vector2(320, 48);
                 GameObject button = CreateButton(self.mainPanel.GetChild(0).gameObject, buttonSize, buttonSprite);
