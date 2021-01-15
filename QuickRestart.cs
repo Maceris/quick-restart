@@ -78,7 +78,7 @@ namespace Booth
             if (Input.GetKey(ResetKeyCode))
             {
                 TimeSpentHoldingKey += Time.deltaTime;
-                if (TimeSpentHoldingKey > ResetKeyThreshold)
+                if (TimeSpentHoldingKey > ResetKeyThreshold && !ResetAlready)
                 {
                     /*
                      * I would remember that the game has been reset and not allow
@@ -93,12 +93,14 @@ namespace Booth
                         PauseScreen = PauseScreenController.instancesList[0];
                     }
                     TimeSpentHoldingKey = 0f;
-                    BoothUtil.ResetGame(PauseScreen);
+                    ResetAlready = true;
+                    BoothUtil.ResetGame(PauseScreen, ConfigConfirmationDialog.Value);
                 }
             }
             if (Input.GetKeyUp(ResetKeyCode))
             {
                 TimeSpentHoldingKey = 0f;
+                ResetAlready = false;
             }
         }
 
@@ -120,7 +122,7 @@ namespace Booth
         public void Awake()
         {
             SetupConfig();
-
+            
             // Make our assets available to load
             using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("QuickRestart.booth_assets"))
             {
@@ -150,6 +152,11 @@ namespace Booth
             //Add restart button to the pause screen
             On.RoR2.UI.PauseScreenController.Awake += (orig, self) => {
                 orig(self);
+                if (Run.instance is null)
+                {
+                    // Don't show in lobby
+                    return;
+                }
                 //Vector2 buttonSize = new Vector2(320, 48);
                 Vector2 buttonSize = new Vector2(320, 48);
                 GameObject button = BoothUtil.CreateButton(self.mainPanel.GetChild(0).gameObject, buttonSize, buttonSprite);
@@ -208,7 +215,7 @@ namespace Booth
 
                 // Set up what to do when the button is clicked
                 button.GetComponent<RoR2.UI.HGButton>().onClick.AddListener(() => {
-                    BoothUtil.ResetGame(self);
+                    BoothUtil.ResetGame(self, ConfigConfirmationDialog.Value);
                 });
             };
         }
@@ -222,5 +229,6 @@ namespace Booth
         private static KeyCode ResetKeyCode = KeyCode.T;
         private float TimeSpentHoldingKey = 0f;
         private float ResetKeyThreshold = 1f;
+        private bool ResetAlready = false;
     }
 }
