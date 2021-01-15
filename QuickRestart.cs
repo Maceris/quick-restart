@@ -8,6 +8,7 @@ using UnityEngine.UI;
 using System.Reflection;
 using R2API.Utils;
 using System.Threading;
+using BepInEx.Configuration;
 
 namespace Booth
 {
@@ -114,8 +115,48 @@ namespace Booth
             return actualImage;
         }
 
+        public void SetupConfig()
+        {
+            ConfigButtonPosition = Config.Bind<String>(
+            "Graphics",
+            "ButtonPosition",
+            "bottom",
+            "The position of the button in the pause menu. Options are 'top', 'bottom', or the number of positions away from the top, so '1' would be 1 below the top item and thus second in the list"
+            );
+
+            ConfigConfirmationDialog = Config.Bind<bool>(
+            "Graphics",
+            "ConfirmationDialogEnabled",
+            false,
+            "Enables a confirmation dialog when trying to reset so it is not done accidentally"
+            );
+
+            ConfigResetKeyEnabled = Config.Bind<bool>(
+            "Keybind",
+            "ResetKeyEnabled",
+            false,
+            "Allows a key press to be used to reset runs in addition to the menu"
+            );
+
+            ConfigResetKeyBind = Config.Bind<String>(
+            "Keybind",
+            "ResetKeyBind",
+            "T",
+            "The key that has to be pressed to reset"
+            );
+
+            ConfigResetKeyHoldTime = Config.Bind<int>(
+            "Keybind",
+            "ResetKeyHoldTime",
+            1000,
+            "The number of ms that the reset key has to be held in order to reset. Divide by 1000 to get seconds"
+            );
+
+        }
+
         public void Awake()
         {
+            SetupConfig();
 
             // Make our assets available to load
             using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("QuickRestart.booth_assets"))
@@ -205,6 +246,11 @@ namespace Booth
                 PreGameController.instance.InvokeMethod("StartRun");//CCPregameStartRun
             }
         }
+        public static ConfigEntry<String> ConfigButtonPosition { get; set; }
+        public static ConfigEntry<bool> ConfigResetKeyEnabled { get; set; }
+        public static ConfigEntry<String> ConfigResetKeyBind { get; set; }
+        public static ConfigEntry<int> ConfigResetKeyHoldTime { get; set; }
+        public static ConfigEntry<bool> ConfigConfirmationDialog { get; set; }
 
     }
 
