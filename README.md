@@ -8,6 +8,10 @@ This was tested and working on at least these builds:
 
 # Changelog
 
+**1.2.2**
+
+* Moved button to the bottom after complaints (even from the developer) of accidentally hitting restart instead of resume.
+
 **1.2.1**
 
 * Fix incompatability with PhotoMode mod (and possibly others)

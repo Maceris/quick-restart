@@ -13,7 +13,7 @@ namespace Booth
 {
 
     [BepInDependency("com.bepis.r2api")]
-    [BepInPlugin("com.IkalaGaming.QuickRestart", "QuickRestart", "1.2.1")]
+    [BepInPlugin("com.IkalaGaming.QuickRestart", "QuickRestart", "1.2.2")]
     [R2APISubmoduleDependency(nameof(ResourcesAPI))]
     public class QuickRestart : BaseUnityPlugin
     {
@@ -167,7 +167,7 @@ namespace Booth
                 CreateText(buttonText, button, new Color(1, 1, 1, 1), 24, 0, new Vector2(12, 4), new Vector2(-12, -4), "Restart");
 
                 // Place our button above the pause menu buttons
-                button.transform.SetAsFirstSibling();
+                button.transform.SetAsLastSibling();
 
                 if (PlayerCharacterMasterController.instances.Count > 1)
 
