@@ -170,9 +170,36 @@ namespace Booth
                 List<TMPro.TextMeshProUGUI> buttonText = new List<TMPro.TextMeshProUGUI>();
                 BoothUtil.CreateText(buttonText, button, new Color(1, 1, 1, 1), 24, 0, new Vector2(12, 4), new Vector2(-12, -4), "Restart");
 
-                // Place our button above the pause menu buttons
-                button.transform.SetAsLastSibling();
-
+                if ("top".Equals(ConfigButtonPosition.Value, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    button.transform.SetAsFirstSibling();
+                }
+                else if ("bottom".Equals(ConfigButtonPosition.Value, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    button.transform.SetAsLastSibling();
+                }
+                else
+                {
+                    try
+                    {
+                        int position = Convert.ToInt32(ConfigButtonPosition.Value);
+                        if (position < 0)
+                        {
+                            position = 0;
+                        }
+                        else if (position >= button.transform.parent.childCount)
+                        {
+                            position = button.transform.parent.childCount - 1;
+                        }
+                        button.transform.SetSiblingIndex(position);
+                    }
+                    catch (FormatException e)
+                    {
+                        //default to bottom
+                        button.transform.SetAsLastSibling();
+                    }
+                }
+                
                 if (PlayerCharacterMasterController.instances.Count > 1)
                 {
                     // Disable on multiplayer, as it's broken there and I don't have a fix yet.instances
@@ -185,7 +212,6 @@ namespace Booth
                 });
             };
         }
-
         
         public static ConfigEntry<String> ConfigButtonPosition { get; set; }
         public static ConfigEntry<bool> ConfigResetKeyEnabled { get; set; }
@@ -196,7 +222,5 @@ namespace Booth
         private static KeyCode ResetKeyCode = KeyCode.T;
         private float TimeSpentHoldingKey = 0f;
         private float ResetKeyThreshold = 1f;
-
     }
-
 }
