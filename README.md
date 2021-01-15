@@ -8,6 +8,11 @@ This was tested and working on at least these builds:
 
 # Changelog
 
+**1.2.0**
+
+* Fix incompatability with StartingItemsGUI mod
+* Remove button in multiplayer, since it's broken there
+
 **1.1.1**
 
 * Add code to github

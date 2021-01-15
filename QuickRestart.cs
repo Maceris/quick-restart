@@ -117,12 +117,6 @@ namespace Booth
         public void Awake()
         {
 
-            if (PlayerCharacterMasterController.instances.Count > 1)
-            {
-                // Disable on multiplayer, as it's broken there and I don't have a fix yet.instances
-                return;
-            }
-
             // Make our assets available to load
             using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("QuickRestart.booth_assets"))
             {
@@ -174,6 +168,13 @@ namespace Booth
 
                 // Place our button above the pause menu buttons
                 button.transform.SetAsFirstSibling();
+
+                if (PlayerCharacterMasterController.instances.Count > 1)
+
+                {
+                    // Disable on multiplayer, as it's broken there and I don't have a fix yet.instances
+                    button.SetActive(false);
+                }
 
                 // Set up what to do when the button is clicked
                 button.GetComponent<RoR2.UI.HGButton>().onClick.AddListener(() => {
