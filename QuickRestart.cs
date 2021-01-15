@@ -13,7 +13,7 @@ namespace Booth
 {
 
     [BepInDependency("com.bepis.r2api")]
-    [BepInPlugin("com.IkalaGaming.QuickRestart", "QuickRestart", "1.1.1")]
+    [BepInPlugin("com.IkalaGaming.QuickRestart", "QuickRestart", "1.2.0")]
     [R2APISubmoduleDependency(nameof(ResourcesAPI))]
     public class QuickRestart : BaseUnityPlugin
     {
@@ -116,6 +116,12 @@ namespace Booth
 
         public void Awake()
         {
+
+            if (PlayerCharacterMasterController.instances.Count > 1)
+            {
+                // Disable on multiplayer, as it's broken there and I don't have a fix yet.instances
+                return;
+            }
 
             // Make our assets available to load
             using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("QuickRestart.booth_assets"))
