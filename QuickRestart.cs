@@ -219,23 +219,30 @@ namespace Booth
 
                 // Set up what to do when the button is clicked
                 button.GetComponent<RoR2.UI.HGButton>().onClick.AddListener(() => {
-                    // Close the pause menu
-                    self.InvokeMethod("OnDisable");
-                    UnityEngine.Object.Destroy(self.gameObject);
-
-                    if (!(Run.instance is null || Run.instance.gameObject is null))
-                    {
-                        UnityEngine.Object.Destroy(Run.instance.gameObject);//CCRunEnd
-                    }
-                    
-                    // Start a new game, but wait a bit before we do so the PreGameController has time to get created
-                    // We do this on another thread since this method is running on the same thread as UI
-                    ThreadStart work = StartNewGame;
-                    Thread thread = new Thread(work);
-                    thread.Start();
-
+                    ResetGame(self);
                 });
             };
+        }
+
+        private void ResetGame(RoR2.UI.PauseScreenController pauseScreen)
+        {
+            if (! (pauseScreen is null))
+            {
+                // Close the pause menu
+                pauseScreen.InvokeMethod("OnDisable");
+                UnityEngine.Object.Destroy(pauseScreen.gameObject);
+            }
+
+            if (!(Run.instance is null || Run.instance.gameObject is null))
+            {
+                UnityEngine.Object.Destroy(Run.instance.gameObject);//CCRunEnd
+            }
+
+            // Start a new game, but wait a bit before we do so the PreGameController has time to get created
+            // We do this on another thread since this method is running on the same thread as UI
+            ThreadStart work = StartNewGame;
+            Thread thread = new Thread(work);
+            thread.Start();
         }
 
         private void StartNewGame()
