@@ -9,12 +9,13 @@ using System.Reflection;
 using R2API.Utils;
 using BepInEx.Configuration;
 using QuickRestart;
+using RoR2.UI;
 
 namespace Booth
 {
 
     [BepInDependency("com.bepis.r2api")]
-    [BepInPlugin("com.IkalaGaming.QuickRestart", "QuickRestart", "1.2.2")]
+    [BepInPlugin("com.IkalaGaming.QuickRestart", "QuickRestart", "1.3.0")]
     [R2APISubmoduleDependency(nameof(ResourcesAPI))]
     public class QuickRestart : BaseUnityPlugin
     {
@@ -25,7 +26,7 @@ namespace Booth
             "Graphics",
             "ButtonPosition",
             "bottom",
-            "The position of the button in the pause menu. Options are 'top', 'bottom', or the number of positions away from the top, so '1' would be 1 below the top item and thus second in the list"
+            "The position of the button in the pause menu. Options are 'top', 'bottom', or the number of positions away from the top, so '1' would be 1 below the top item and thus second in the list. Falls back to default if you give weird values."
             );
 
             ConfigConfirmationDialog = Config.Bind<bool>(
@@ -46,7 +47,7 @@ namespace Booth
             "Keybind",
             "ResetKeyBind",
             "T",
-            "The key that has to be pressed to reset"
+            "The key that has to be pressed to reset. Falls back to default if you give weird values."
             );
 
             // Convert the keybind to a real key code, falling back to default if there are issues
@@ -59,25 +60,60 @@ namespace Booth
                 ResetKeyCode = KeyCode.T;
             }
 
-            ConfigResetKeyHoldTime = Config.Bind<int>(
+            ConfigResetKeyHoldTime = Config.Bind<float>(
             "Keybind",
             "ResetKeyHoldTime",
-            1000,
-            "The number of ms that the reset key has to be held in order to reset. Divide by 1000 to get seconds"
+            1.0f,
+            "The number of seconds that the reset key has to be held in order to reset. Falls back to default if you give weird values."
             );
+
+            if (ConfigResetKeyHoldTime.Value >= 0)
+            {
+                ResetKeyThreshold = ConfigResetKeyHoldTime.Value;
+            }
         }
 
         void HandleResetKey()
         {
-
+            if (Input.GetKey(ResetKeyCode))
+            {
+                TimeSpentHoldingKey += Time.deltaTime;
+                if (TimeSpentHoldingKey > ResetKeyThreshold)
+                {
+                    /*
+                     * I would remember that the game has been reset and not allow
+                     * it to reset again until the key is released, except for some
+                     * reason, when resetting the game it thinks the key has been
+                     * released, so GetKeyUp gets called anyways. Oh well, I guess
+                     * we can just hold down the key and continuously reset.
+                     */
+                    PauseScreenController PauseScreen = null;
+                    if (PauseScreenController.instancesList.Count > 0)
+                    {
+                        PauseScreen = PauseScreenController.instancesList[0];
+                    }
+                    TimeSpentHoldingKey = 0f;
+                    BoothUtil.ResetGame(PauseScreen);
+                }
+            }
+            if (Input.GetKeyUp(ResetKeyCode))
+            {
+                TimeSpentHoldingKey = 0f;
+            }
         }
 
         void Update()
         {
             if (ConfigResetKeyEnabled.Value)
             {
-                // Done this way so we can have other things in the update function
-                HandleResetKey();
+                bool InRun = !(Run.instance is null);
+                bool Multiplayer = PlayerCharacterMasterController.instances.Count > 1;
+                if (InRun && !Multiplayer)
+                {
+                    // Done this way so we can have other things in the update function
+                    HandleResetKey();
+                }
+                
             }
         }
 
@@ -138,7 +174,6 @@ namespace Booth
                 button.transform.SetAsLastSibling();
 
                 if (PlayerCharacterMasterController.instances.Count > 1)
-
                 {
                     // Disable on multiplayer, as it's broken there and I don't have a fix yet.instances
                     button.SetActive(false);
@@ -155,10 +190,12 @@ namespace Booth
         public static ConfigEntry<String> ConfigButtonPosition { get; set; }
         public static ConfigEntry<bool> ConfigResetKeyEnabled { get; set; }
         public static ConfigEntry<String> ConfigResetKeyBind { get; set; }
-        public static ConfigEntry<int> ConfigResetKeyHoldTime { get; set; }
+        public static ConfigEntry<float> ConfigResetKeyHoldTime { get; set; }
         public static ConfigEntry<bool> ConfigConfirmationDialog { get; set; }
 
-        public static KeyCode ResetKeyCode;
+        private static KeyCode ResetKeyCode = KeyCode.T;
+        private float TimeSpentHoldingKey = 0f;
+        private float ResetKeyThreshold = 1f;
 
     }
 
