@@ -10,7 +10,7 @@ This was tested and working on at least these builds:
 
 **1.2.2**
 
-* Moved button to the bottom after complaints (even from the developer) of accidentally hitting restart instead of resume.
+* Moved button to the bottom after complaints (even from the developer) of accidentally hitting restart instead of resume
 
 **1.2.1**
 
