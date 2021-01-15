@@ -8,6 +8,10 @@ This was tested and working on at least these builds:
 
 # Changelog
 
+**1.2.1**
+
+* Fix incompatability with PhotoMode mod (and possibly others)
+
 **1.2.0**
 
 * Fix incompatability with StartingItemsGUI mod
