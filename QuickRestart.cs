@@ -7,116 +7,122 @@ using UnityEngine;
 using UnityEngine.UI;
 using System.Reflection;
 using R2API.Utils;
-using System.Threading;
+using BepInEx.Configuration;
+using QuickRestart;
+using RoR2.UI;
 
 namespace Booth
 {
 
     [BepInDependency("com.bepis.r2api")]
-    [BepInPlugin("com.IkalaGaming.QuickRestart", "QuickRestart", "1.2.2")]
+    [BepInPlugin("com.IkalaGaming.QuickRestart", "QuickRestart", "1.3.0")]
     [R2APISubmoduleDependency(nameof(ResourcesAPI))]
     public class QuickRestart : BaseUnityPlugin
     {
-        static public GameObject CreateButton(GameObject parent, Vector2 size, Sprite sprite)
+       
+        public void SetupConfig()
         {
-            // Set up the colors used for the button
-            ColorBlock colorBlock = new ColorBlock();
-            colorBlock.disabledColor = new Color(0.255f, 0.201f, 0.201f, 0.714f);
-            colorBlock.highlightedColor = new Color(0.988f, 1.000f, 0.693f, 0.733f);
-            colorBlock.normalColor = new Color(0.327f, 0.403f, 0.472f, 1.000f);
-            colorBlock.pressedColor = new Color(0.740f, 0.755f, 0.445f, 0.984f);
-            colorBlock.colorMultiplier = 1;
+            ConfigButtonPosition = Config.Bind<String>(
+            "Graphics",
+            "ButtonPosition",
+            "bottom",
+            "The position of the button in the pause menu. Options are 'top', 'bottom', or the number of positions away from the top, so '1' would be 1 below the top item and thus second in the list. Falls back to default if you give weird values."
+            );
 
-            // The base game object
-            GameObject button = new GameObject();
-            button.name = "Button";
-            button.transform.parent = parent.transform;
-            button.AddComponent<RoR2.UI.MPEventSystemLocator>();
+            ConfigConfirmationDialog = Config.Bind<bool>(
+            "Graphics",
+            "ConfirmationDialogEnabled",
+            false,
+            "Enables a confirmation dialog when trying to reset so it is not done accidentally"
+            );
 
-            // The graphical part
-            Image buttonImage = button.AddComponent<Image>();
-            buttonImage.color = new Color(1, 1, 1, 1);
-            buttonImage.type = Image.Type.Sliced;
-            buttonImage.sprite = sprite;
-            buttonImage.raycastTarget = true;
+            ConfigResetKeyEnabled = Config.Bind<bool>(
+            "Keybind",
+            "ResetKeyEnabled",
+            false,
+            "Allows a key press to be used to reset runs in addition to the menu"
+            );
 
-            // The interactable part
-            RoR2.UI.HGButton actualButton = button.AddComponent<RoR2.UI.HGButton>();
-            actualButton.showImageOnHover = true;
-            actualButton.targetGraphic = buttonImage;
-            actualButton.colors = colorBlock;
-            actualButton.disableGamepadClick = true;
+            ConfigResetKeyBind = Config.Bind<String>(
+            "Keybind",
+            "ResetKeyBind",
+            "T",
+            "The key that has to be pressed to reset. Falls back to default if you give weird values."
+            );
 
-            // Used to set the size of the button
-            RectTransform buttonTransform = button.GetComponent<RectTransform>();
-            buttonTransform.pivot = new Vector2(0, 0);
-            buttonTransform.anchorMin = new Vector2(0.5f, 0.5f);
-            buttonTransform.anchorMax = new Vector2(0.5f, 0.5f);
-            buttonTransform.anchoredPosition = new Vector2(0.5f, 0.5f);
-            buttonTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, size.x);
-            buttonTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, size.y);
-            buttonTransform.localScale = new Vector3(1, 1, 1);
+            // Convert the keybind to a real key code, falling back to default if there are issues
+            try
+            {
+                ResetKeyCode = (KeyCode) Enum.Parse(typeof(KeyCode), ConfigResetKeyBind.Value);
+            }
+            catch (Exception e)
+            {
+                ResetKeyCode = KeyCode.T;
+            }
 
-            return button;
+            ConfigResetKeyHoldTime = Config.Bind<float>(
+            "Keybind",
+            "ResetKeyHoldTime",
+            1.0f,
+            "The number of seconds that the reset key has to be held in order to reset. Falls back to default if you give weird values."
+            );
+
+            if (ConfigResetKeyHoldTime.Value >= 0)
+            {
+                ResetKeyThreshold = ConfigResetKeyHoldTime.Value;
+            }
         }
 
-        static public void CreateText(List<TMPro.TextMeshProUGUI> texts, GameObject parent, Color colour, float size, float textOffset, Vector2 offsetMin, Vector2 offsetMax, String contents)
+        void HandleResetKey()
         {
-            // The base game object for the text
-            GameObject text = new GameObject();
-            text.name = "Text";
-            text.transform.parent = parent.transform;
-            
-            // Actually create the text
-            TMPro.TextMeshProUGUI textMesh = text.AddComponent<RoR2.UI.HGTextMeshProUGUI>();
-            textMesh.color = colour;
-            textMesh.fontSize = size;
-            textMesh.alignment = TMPro.TextAlignmentOptions.Center;
-            textMesh.text = contents;
-            textMesh.raycastTarget = false;
-            textMesh.lineSpacing = -25;
-
-            // Set up the size of the text
-            RectTransform textTransform = text.GetComponent<RectTransform>();
-            textTransform.pivot = new Vector2(0, 1);
-            textTransform.anchorMin = new Vector2(0, 0);
-            textTransform.anchorMax = new Vector2(1, 1);
-            textTransform.offsetMin = new Vector2(offsetMin.x, offsetMin.y + textOffset);
-            textTransform.offsetMax = new Vector2(offsetMax.x, offsetMax.y + textOffset);
-            textTransform.localScale = new Vector3(1, 1, 1);
-            texts.Add(textMesh);
+            if (Input.GetKey(ResetKeyCode))
+            {
+                TimeSpentHoldingKey += Time.deltaTime;
+                if (TimeSpentHoldingKey > ResetKeyThreshold && !ResetAlready)
+                {
+                    /*
+                     * I would remember that the game has been reset and not allow
+                     * it to reset again until the key is released, except for some
+                     * reason, when resetting the game it thinks the key has been
+                     * released, so GetKeyUp gets called anyways. Oh well, I guess
+                     * we can just hold down the key and continuously reset.
+                     */
+                    PauseScreenController PauseScreen = null;
+                    if (PauseScreenController.instancesList.Count > 0)
+                    {
+                        PauseScreen = PauseScreenController.instancesList[0];
+                    }
+                    TimeSpentHoldingKey = 0f;
+                    ResetAlready = true;
+                    BoothUtil.ResetGame(PauseScreen, ConfigConfirmationDialog.Value);
+                }
+            }
+            if (Input.GetKeyUp(ResetKeyCode))
+            {
+                TimeSpentHoldingKey = 0f;
+                ResetAlready = false;
+            }
         }
 
-        static public Image SpawnImage(List<Image> images, GameObject parent, Color color, Vector2 pivot, Vector2 offsetMin, Vector2 offsetMax, Sprite sprite)
+        void Update()
         {
-            // The base game object for the image
-            GameObject image = new GameObject();
-            image.name = "Image";
-            image.transform.parent = parent.transform;
-
-            // Set up the size of the image
-            RectTransform imageTransform = image.AddComponent<RectTransform>();
-            imageTransform.pivot = pivot;
-            imageTransform.anchorMin = new Vector2(0, 0);
-            imageTransform.anchorMax = new Vector2(1, 1);
-            imageTransform.offsetMin = offsetMin;
-            imageTransform.offsetMax = offsetMax;
-            imageTransform.localScale = new Vector3(1, 1, 1);
-
-            // Create the actual image
-            Image actualImage = image.AddComponent<Image>();
-            actualImage.color = color;
-            actualImage.sprite = sprite;
-            actualImage.type = Image.Type.Sliced;
-            actualImage.raycastTarget = false;
-            images.Add(actualImage);
-
-            return actualImage;
+            if (ConfigResetKeyEnabled.Value)
+            {
+                bool InRun = !(Run.instance is null);
+                bool Multiplayer = PlayerCharacterMasterController.instances.Count > 1;
+                if (InRun && !Multiplayer)
+                {
+                    // Done this way so we can have other things in the update function
+                    HandleResetKey();
+                }
+                
+            }
         }
 
         public void Awake()
         {
-
+            SetupConfig();
+            
             // Make our assets available to load
             using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("QuickRestart.booth_assets"))
             {
@@ -146,31 +152,62 @@ namespace Booth
             //Add restart button to the pause screen
             On.RoR2.UI.PauseScreenController.Awake += (orig, self) => {
                 orig(self);
+                if (Run.instance is null)
+                {
+                    // Don't show in lobby
+                    return;
+                }
                 //Vector2 buttonSize = new Vector2(320, 48);
                 Vector2 buttonSize = new Vector2(320, 48);
-                GameObject button = CreateButton(self.mainPanel.GetChild(0).gameObject, buttonSize, buttonSprite);
+                GameObject button = BoothUtil.CreateButton(self.mainPanel.GetChild(0).gameObject, buttonSize, buttonSprite);
 
                 // Add in the stylized highlight/border
                 List<Image> images = new List<Image>();
-                SpawnImage(images, button, new Color(1, 1, 1, 1), new Vector2(0.5f, 0.5f), new Vector2(-6, -6), new Vector2(6, 6), buttonHighlightSprite);
+                BoothUtil.SpawnImage(images, button, new Color(1, 1, 1, 1), new Vector2(0.5f, 0.5f), new Vector2(-6, -6), new Vector2(6, 6), buttonHighlightSprite);
                 images[images.Count - 1].gameObject.SetActive(false);
 
                 // Add in the sharp white border line
-                SpawnImage(new List<Image>(), button, new Color(1, 1, 1, 0.286f), new Vector2(0.5f, 0.5f), new Vector2(0, 0), new Vector2(0, 0), buttonBorderSprite);
+                BoothUtil.SpawnImage(new List<Image>(), button, new Color(1, 1, 1, 0.286f), new Vector2(0.5f, 0.5f), new Vector2(0, 0), new Vector2(0, 0), buttonBorderSprite);
 
                 // Add in the thicker surrounding outline for when you hover on the button
-                Image highlightImage = SpawnImage(new List<Image>(), button, new Color(1, 1, 1, 1), new Vector2(0.5f, 0.5f), new Vector2(-4, -12), new Vector2(14, 4), buttonOutlineSprite);
+                Image highlightImage = BoothUtil.SpawnImage(new List<Image>(), button, new Color(1, 1, 1, 1), new Vector2(0.5f, 0.5f), new Vector2(-4, -12), new Vector2(14, 4), buttonOutlineSprite);
                 button.GetComponent<RoR2.UI.HGButton>().imageOnHover = highlightImage;
 
                 // Add in the restart text
                 List<TMPro.TextMeshProUGUI> buttonText = new List<TMPro.TextMeshProUGUI>();
-                CreateText(buttonText, button, new Color(1, 1, 1, 1), 24, 0, new Vector2(12, 4), new Vector2(-12, -4), "Restart");
+                BoothUtil.CreateText(buttonText, button, new Color(1, 1, 1, 1), 24, 0, new Vector2(12, 4), new Vector2(-12, -4), "Restart");
 
-                // Place our button above the pause menu buttons
-                button.transform.SetAsLastSibling();
-
+                if ("top".Equals(ConfigButtonPosition.Value, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    button.transform.SetAsFirstSibling();
+                }
+                else if ("bottom".Equals(ConfigButtonPosition.Value, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    button.transform.SetAsLastSibling();
+                }
+                else
+                {
+                    try
+                    {
+                        int position = Convert.ToInt32(ConfigButtonPosition.Value);
+                        if (position < 0)
+                        {
+                            position = 0;
+                        }
+                        else if (position >= button.transform.parent.childCount)
+                        {
+                            position = button.transform.parent.childCount - 1;
+                        }
+                        button.transform.SetSiblingIndex(position);
+                    }
+                    catch (FormatException e)
+                    {
+                        //default to bottom
+                        button.transform.SetAsLastSibling();
+                    }
+                }
+                
                 if (PlayerCharacterMasterController.instances.Count > 1)
-
                 {
                     // Disable on multiplayer, as it's broken there and I don't have a fix yet.instances
                     button.SetActive(false);
@@ -178,34 +215,20 @@ namespace Booth
 
                 // Set up what to do when the button is clicked
                 button.GetComponent<RoR2.UI.HGButton>().onClick.AddListener(() => {
-                    // Close the pause menu
-                    self.InvokeMethod("OnDisable");
-                    UnityEngine.Object.Destroy(self.gameObject);
-
-                    if (!(Run.instance is null || Run.instance.gameObject is null))
-                    {
-                        UnityEngine.Object.Destroy(Run.instance.gameObject);//CCRunEnd
-                    }
-                    
-                    // Start a new game, but wait a bit before we do so the PreGameController has time to get created
-                    // We do this on another thread since this method is running on the same thread as UI
-                    ThreadStart work = StartNewGame;
-                    Thread thread = new Thread(work);
-                    thread.Start();
-
+                    BoothUtil.ResetGame(self, ConfigConfirmationDialog.Value);
                 });
             };
         }
+        
+        public static ConfigEntry<String> ConfigButtonPosition { get; set; }
+        public static ConfigEntry<bool> ConfigResetKeyEnabled { get; set; }
+        public static ConfigEntry<String> ConfigResetKeyBind { get; set; }
+        public static ConfigEntry<float> ConfigResetKeyHoldTime { get; set; }
+        public static ConfigEntry<bool> ConfigConfirmationDialog { get; set; }
 
-        private void StartNewGame()
-        {
-            System.Threading.Thread.Sleep(1000);
-            if (!(PreGameController.instance is null))
-            {
-                PreGameController.instance.InvokeMethod("StartRun");//CCPregameStartRun
-            }
-        }
-
+        private static KeyCode ResetKeyCode = KeyCode.T;
+        private float TimeSpentHoldingKey = 0f;
+        private float ResetKeyThreshold = 1f;
+        private bool ResetAlready = false;
     }
-
 }
