@@ -13,7 +13,7 @@ using RoR2.UI;
 
 namespace Booth
 {
-
+    [NetworkCompatibility(CompatibilityLevel.NoNeedForSync)]
     [BepInDependency("com.bepis.r2api")]
     [BepInPlugin("com.IkalaGaming.QuickRestart", "QuickRestart", "1.3.0")]
     [R2APISubmoduleDependency(nameof(ResourcesAPI))]
