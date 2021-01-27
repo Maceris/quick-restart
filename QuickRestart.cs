@@ -15,7 +15,7 @@ namespace Booth
 {
     [NetworkCompatibility(CompatibilityLevel.NoNeedForSync)]
     [BepInDependency("com.bepis.r2api")]
-    [BepInPlugin("com.IkalaGaming.QuickRestart", "QuickRestart", "1.3.0")]
+    [BepInPlugin("com.IkalaGaming.QuickRestart", "QuickRestart", "1.3.1")]
     [R2APISubmoduleDependency(nameof(ResourcesAPI))]
     public class QuickRestart : BaseUnityPlugin
     {

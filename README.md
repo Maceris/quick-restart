@@ -8,6 +8,10 @@ This was tested and working on at least these builds:
 
 # Changelog
 
+**1.3.1**
+
+* Mark mod as unneeded for network sync so users can connect to others without this mod (via PhantomGamers)
+
 **1.3.0**
 
 * Add config option to enable pressing a button to restart, changing the keybind, and how long it needs to be held
