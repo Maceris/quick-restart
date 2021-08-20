@@ -122,20 +122,19 @@ namespace Booth
         public void Awake()
         {
             SetupConfig();
-            
+
+            AssetBundle bundle;
             // Make our assets available to load
             using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("QuickRestart.booth_assets"))
             {
-                var bundle = AssetBundle.LoadFromStream(stream);
-                var provider = new AssetBundleResourcesProvider("@Booth", bundle);
-                ResourcesAPI.AddProvider(provider);
+                bundle = AssetBundle.LoadFromStream(stream);
             }
 
             // Set up textures for the UI button
-            Texture2D buttonTexture = Resources.Load<Texture2D>("@Booth:Assets/Texture2D/Booth_texUICleanButton.png");
-            Texture2D buttonHighlightTexture = Resources.Load<Texture2D>("@Booth:Assets/Texture2D/Booth_texUIHighlightHeader.png");
-            Texture2D buttonBorderTexture = Resources.Load<Texture2D>("@Booth:Assets/Texture2D/Booth_texUIOutlineOnly.png");
-            Texture2D buttonOutlineTexture = Resources.Load<Texture2D>("@Booth:Assets/Texture2D/Booth_texUIHighlightBoxOutlineThick.png");
+            Texture2D buttonTexture = bundle.LoadAsset<Texture2D>("Assets/Texture2D/Booth_texUICleanButton.png");
+            Texture2D buttonHighlightTexture = bundle.LoadAsset<Texture2D>("Assets/Texture2D/Booth_texUIHighlightHeader.png");
+            Texture2D buttonBorderTexture = bundle.LoadAsset<Texture2D>("Assets/Texture2D/Booth_texUIOutlineOnly.png");
+            Texture2D buttonOutlineTexture = bundle.LoadAsset<Texture2D>("Assets/Texture2D/Booth_texUIHighlightBoxOutlineThick.png");
 
             // Needed to convert the textures to sprites
             Rect buttonTextureDimensions = new Rect(0, 0, buttonTexture.width, buttonTexture.height);
