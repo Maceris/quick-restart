@@ -15,7 +15,7 @@ namespace Booth
 {
     [NetworkCompatibility(CompatibilityLevel.NoNeedForSync)]
     [BepInDependency("com.bepis.r2api")]
-    [BepInPlugin("com.IkalaGaming.QuickRestart", "QuickRestart", "1.3.1")]
+    [BepInPlugin("com.IkalaGaming.QuickRestart", "QuickRestart", "1.3.2")]
     [R2APISubmoduleDependency(nameof(ResourcesAPI))]
     public class QuickRestart : BaseUnityPlugin
     {
@@ -94,7 +94,7 @@ namespace Booth
                     }
                     TimeSpentHoldingKey = 0f;
                     ResetAlready = true;
-                    BoothUtil.ResetGame(PauseScreen, ConfigConfirmationDialog.Value);
+                    BoothUtil.ResetGame(PauseScreen, ConfigConfirmationDialog.Value, this);
                 }
             }
             if (Input.GetKeyUp(ResetKeyCode))
@@ -109,7 +109,7 @@ namespace Booth
             if (ConfigResetKeyEnabled.Value)
             {
                 bool InRun = !(Run.instance is null);
-                bool Multiplayer = PlayerCharacterMasterController.instances.Count > 1;
+                bool Multiplayer = PlayerCharacterMasterController.instances.Count > 1 && !BoothUtil.IsMultiplayerHost();
                 if (InRun && !Multiplayer)
                 {
                     // Done this way so we can have other things in the update function
@@ -151,12 +151,12 @@ namespace Booth
             //Add restart button to the pause screen
             On.RoR2.UI.PauseScreenController.Awake += (orig, self) => {
                 orig(self);
-                if (Run.instance is null)
+                if (Run.instance is null || PreGameController.instance)
                 {
                     // Don't show in lobby
                     return;
                 }
-                //Vector2 buttonSize = new Vector2(320, 48);
+                
                 Vector2 buttonSize = new Vector2(320, 48);
                 GameObject button = BoothUtil.CreateButton(self.mainPanel.GetChild(0).gameObject, buttonSize, buttonSprite);
 
@@ -206,15 +206,15 @@ namespace Booth
                     }
                 }
                 
-                if (PlayerCharacterMasterController.instances.Count > 1)
+                if (PlayerCharacterMasterController.instances.Count > 1 && !BoothUtil.IsMultiplayerHost())
                 {
-                    // Disable on multiplayer, as it's broken there and I don't have a fix yet.instances
+                    // Disable on multiplayer, unless they are the host
                     button.SetActive(false);
                 }
 
                 // Set up what to do when the button is clicked
                 button.GetComponent<RoR2.UI.HGButton>().onClick.AddListener(() => {
-                    BoothUtil.ResetGame(self, ConfigConfirmationDialog.Value);
+                    BoothUtil.ResetGame(self, ConfigConfirmationDialog.Value, this);
                 });
             };
         }

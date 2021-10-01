@@ -2,9 +2,11 @@
 using RoR2;
 using RoR2.UI;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using UnityEngine.Networking;
 using UnityEngine.UI;
 
 namespace QuickRestart
@@ -108,7 +110,7 @@ namespace QuickRestart
             return actualImage;
         }
 
-        static public void ResetGame(PauseScreenController pauseScreen, bool AskConfirmation)
+        static public void ResetGame(PauseScreenController pauseScreen, bool AskConfirmation, Booth.QuickRestart parent)
         {
             if (AskConfirmation)
             {
@@ -126,18 +128,23 @@ namespace QuickRestart
                 }
                 confirmation.descriptionToken = new SimpleDialogBox.TokenParamsPair(description);
                 confirmation.AddActionButton(() => {
-                    ActuallyResetGame(pauseScreen);
+                    ActuallyResetGame(pauseScreen, parent);
                 }, "Yes");
                 confirmation.AddCancelButton("Cancel");
 
             } else
             {
                 // Avoid duplicate code but allow the dialog shenanigans
-                ActuallyResetGame(pauseScreen);
+                ActuallyResetGame(pauseScreen, parent);
             }
         }
 
-        static private void ActuallyResetGame(PauseScreenController pauseScreen)
+        static public bool IsMultiplayerHost()
+        {
+            return RoR2.NetworkSession.instance && NetworkServer.active;
+        }
+
+        static private void ActuallyResetGame(PauseScreenController pauseScreen, Booth.QuickRestart parent)
         {
             if (!(pauseScreen is null))
             {
@@ -146,25 +153,39 @@ namespace QuickRestart
                 UnityEngine.Object.Destroy(pauseScreen.gameObject);
             }
 
-            if (!(Run.instance is null || Run.instance.gameObject is null))
+            if (IsMultiplayerHost())
             {
-                UnityEngine.Object.Destroy(Run.instance.gameObject);//CCRunEnd
+                RoR2.NetworkSession.instance.EndRun();
+                parent.StartCoroutine(StartNewGameMultiplayer());
             }
-
-            // Start a new game, but wait a bit before we do so the PreGameController has time to get created
-            // We do this on another thread since this method is running on the same thread as UI
-            ThreadStart work = StartNewGame;
-            Thread thread = new Thread(work);
-            thread.Start();
+            else
+            {
+                // This is probably deprecated after the Anniversary update
+                if (!(Run.instance is null || Run.instance.gameObject is null))
+                {
+                    UnityEngine.Object.Destroy(Run.instance.gameObject);//CCRunEnd
+                }
+                parent.StartCoroutine(StartNewGameSingleplayer());
+            }
         }
 
-        static private void StartNewGame()
+        static private IEnumerator StartNewGameSingleplayer()
         {
-            System.Threading.Thread.Sleep(1000);
-            if (!(PreGameController.instance is null))
+            while (!PreGameController.instance)
             {
-                PreGameController.instance.InvokeMethod("StartRun");//CCPregameStartRun
+                yield return new WaitForSeconds(0.1f);
             }
+            PreGameController.instance.InvokeMethod("StartRun");//CCPregameStartRun
+        }
+
+        static private IEnumerator StartNewGameMultiplayer()
+        {
+            while (!PreGameController.instance)
+            {
+   
+                yield return new WaitForSeconds(0.1f);
+            }
+            PreGameController.instance.StartLaunch();
         }
     }
 }

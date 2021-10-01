@@ -1,12 +1,12 @@
 # Overview
 The quick restart mod adds a button to the pause menu that allows you to start a new run with the current character, difficulty, and artifacts.
 
-This was tested and working on at least these builds:
-
-* 1.0.0.6
-* 1.0.3.1
-
 # Changelog
+
+**1.3.2**
+
+* Update resource loading to newer system
+* Enable in multiplayer if you are the host
 
 **1.3.1**
 
