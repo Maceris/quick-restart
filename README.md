@@ -3,6 +3,10 @@ The quick restart mod adds a button to the pause menu that allows you to start a
 
 # Changelog
 
+**1.3.3**
+
+* Version bump due to upload bug
+
 **1.3.2**
 
 * Update resource loading to newer system
