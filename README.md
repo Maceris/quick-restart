@@ -3,6 +3,11 @@ The quick restart mod adds a button to the pause menu that allows you to start a
 
 # Changelog
 
+**1.3.4**
+
+* Add button for going back to character select
+* Add config option to put the character select button wherever on the pause menu
+
 **1.3.3**
 
 * Version bump due to upload bug

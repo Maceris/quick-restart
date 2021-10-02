@@ -15,18 +15,25 @@ namespace Booth
 {
     [NetworkCompatibility(CompatibilityLevel.NoNeedForSync)]
     [BepInDependency("com.bepis.r2api")]
-    [BepInPlugin("com.IkalaGaming.QuickRestart", "QuickRestart", "1.3.2")]
+    [BepInPlugin("com.IkalaGaming.QuickRestart", "QuickRestart", "1.3.4")]
     [R2APISubmoduleDependency(nameof(ResourcesAPI))]
     public class QuickRestart : BaseUnityPlugin
     {
        
         public void SetupConfig()
         {
-            ConfigButtonPosition = Config.Bind<String>(
+            ConfigRestartButtonPosition = Config.Bind<String>(
             "Graphics",
-            "ButtonPosition",
+            "RestartPosition",
             "bottom",
-            "The position of the button in the pause menu. Options are 'top', 'bottom', or the number of positions away from the top, so '1' would be 1 below the top item and thus second in the list. Falls back to default if you give weird values."
+            "The position of the restart button in the pause menu. Options are 'top', 'bottom', or the number of positions away from the top, so '1' would be 1 below the top item and thus second in the list. Falls back to default if you give weird values."
+            );
+
+            ConfigCharacterButtonPosition = Config.Bind<String>(
+            "Graphics",
+            "CharacterPosition",
+            "bottom",
+            "The position of the character select button in the pause menu. Options are 'top', 'bottom', or the number of positions away from the top, so '1' would be 1 below the top item and thus second in the list. Falls back to default if you give weird values. Evaluated after the restart button is placed."
             );
 
             ConfigConfirmationDialog = Config.Bind<bool>(
@@ -94,7 +101,7 @@ namespace Booth
                     }
                     TimeSpentHoldingKey = 0f;
                     ResetAlready = true;
-                    BoothUtil.ResetGame(PauseScreen, ConfigConfirmationDialog.Value, this);
+                    BoothUtil.ResetGame(PauseScreen, ConfigConfirmationDialog.Value, this, true);
                 }
             }
             if (Input.GetKeyUp(ResetKeyCode))
@@ -176,11 +183,11 @@ namespace Booth
                 List<TMPro.TextMeshProUGUI> buttonText = new List<TMPro.TextMeshProUGUI>();
                 BoothUtil.CreateText(buttonText, button, new Color(1, 1, 1, 1), 24, 0, new Vector2(12, 4), new Vector2(-12, -4), "Restart");
 
-                if ("top".Equals(ConfigButtonPosition.Value, StringComparison.InvariantCultureIgnoreCase))
+                if ("top".Equals(ConfigRestartButtonPosition.Value, StringComparison.InvariantCultureIgnoreCase))
                 {
                     button.transform.SetAsFirstSibling();
                 }
-                else if ("bottom".Equals(ConfigButtonPosition.Value, StringComparison.InvariantCultureIgnoreCase))
+                else if ("bottom".Equals(ConfigRestartButtonPosition.Value, StringComparison.InvariantCultureIgnoreCase))
                 {
                     button.transform.SetAsLastSibling();
                 }
@@ -188,7 +195,7 @@ namespace Booth
                 {
                     try
                     {
-                        int position = Convert.ToInt32(ConfigButtonPosition.Value);
+                        int position = Convert.ToInt32(ConfigRestartButtonPosition.Value);
                         if (position < 0)
                         {
                             position = 0;
@@ -214,12 +221,83 @@ namespace Booth
 
                 // Set up what to do when the button is clicked
                 button.GetComponent<RoR2.UI.HGButton>().onClick.AddListener(() => {
-                    BoothUtil.ResetGame(self, ConfigConfirmationDialog.Value, this);
+                    BoothUtil.ResetGame(self, ConfigConfirmationDialog.Value, this, true);
+                });
+            };
+
+            //Add Back to Character Select to the pause screen
+            On.RoR2.UI.PauseScreenController.Awake += (orig, self) => {
+                orig(self);
+                if (Run.instance is null || PreGameController.instance)
+                {
+                    // Don't show in lobby
+                    return;
+                }
+
+                Vector2 buttonSize = new Vector2(320, 48);
+                GameObject button = BoothUtil.CreateButton(self.mainPanel.GetChild(0).gameObject, buttonSize, buttonSprite);
+
+                // Add in the stylized highlight/border
+                List<Image> images = new List<Image>();
+                BoothUtil.SpawnImage(images, button, new Color(1, 1, 1, 1), new Vector2(0.5f, 0.5f), new Vector2(-6, -6), new Vector2(6, 6), buttonHighlightSprite);
+                images[images.Count - 1].gameObject.SetActive(false);
+
+                // Add in the sharp white border line
+                BoothUtil.SpawnImage(new List<Image>(), button, new Color(1, 1, 1, 0.286f), new Vector2(0.5f, 0.5f), new Vector2(0, 0), new Vector2(0, 0), buttonBorderSprite);
+
+                // Add in the thicker surrounding outline for when you hover on the button
+                Image highlightImage = BoothUtil.SpawnImage(new List<Image>(), button, new Color(1, 1, 1, 1), new Vector2(0.5f, 0.5f), new Vector2(-4, -12), new Vector2(14, 4), buttonOutlineSprite);
+                button.GetComponent<RoR2.UI.HGButton>().imageOnHover = highlightImage;
+
+                // Add in the character select text
+                List<TMPro.TextMeshProUGUI> buttonText = new List<TMPro.TextMeshProUGUI>();
+                BoothUtil.CreateText(buttonText, button, new Color(1, 1, 1, 1), 24, 0, new Vector2(12, 4), new Vector2(-12, -4), "Character Select");
+
+                if ("top".Equals(ConfigCharacterButtonPosition.Value, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    button.transform.SetAsFirstSibling();
+                }
+                else if ("bottom".Equals(ConfigCharacterButtonPosition.Value, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    button.transform.SetAsLastSibling();
+                }
+                else
+                {
+                    try
+                    {
+                        int position = Convert.ToInt32(ConfigCharacterButtonPosition.Value);
+                        if (position < 0)
+                        {
+                            position = 0;
+                        }
+                        else if (position >= button.transform.parent.childCount)
+                        {
+                            position = button.transform.parent.childCount - 1;
+                        }
+                        button.transform.SetSiblingIndex(position);
+                    }
+                    catch (FormatException e)
+                    {
+                        //default to bottom
+                        button.transform.SetAsLastSibling();
+                    }
+                }
+
+                if (PlayerCharacterMasterController.instances.Count > 1 && !BoothUtil.IsMultiplayerHost())
+                {
+                    // Disable on multiplayer, unless they are the host
+                    button.SetActive(false);
+                }
+
+                // Set up what to do when the button is clicked
+                button.GetComponent<RoR2.UI.HGButton>().onClick.AddListener(() => {
+                    BoothUtil.ResetGame(self, ConfigConfirmationDialog.Value, this, false);
                 });
             };
         }
         
-        public static ConfigEntry<String> ConfigButtonPosition { get; set; }
+        public static ConfigEntry<String> ConfigRestartButtonPosition { get; set; }
+        public static ConfigEntry<String> ConfigCharacterButtonPosition { get; set; }
         public static ConfigEntry<bool> ConfigResetKeyEnabled { get; set; }
         public static ConfigEntry<String> ConfigResetKeyBind { get; set; }
         public static ConfigEntry<float> ConfigResetKeyHoldTime { get; set; }

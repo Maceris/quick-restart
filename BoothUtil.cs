@@ -110,7 +110,7 @@ namespace QuickRestart
             return actualImage;
         }
 
-        static public void ResetGame(PauseScreenController pauseScreen, bool AskConfirmation, Booth.QuickRestart parent)
+        static public void ResetGame(PauseScreenController pauseScreen, bool AskConfirmation, Booth.QuickRestart parent, bool startNewGame)
         {
             if (AskConfirmation)
             {
@@ -128,14 +128,14 @@ namespace QuickRestart
                 }
                 confirmation.descriptionToken = new SimpleDialogBox.TokenParamsPair(description);
                 confirmation.AddActionButton(() => {
-                    ActuallyResetGame(pauseScreen, parent);
+                    ActuallyResetGame(pauseScreen, parent, startNewGame);
                 }, "Yes");
                 confirmation.AddCancelButton("Cancel");
 
             } else
             {
                 // Avoid duplicate code but allow the dialog shenanigans
-                ActuallyResetGame(pauseScreen, parent);
+                ActuallyResetGame(pauseScreen, parent, startNewGame);
             }
         }
 
@@ -144,7 +144,7 @@ namespace QuickRestart
             return RoR2.NetworkSession.instance && NetworkServer.active;
         }
 
-        static private void ActuallyResetGame(PauseScreenController pauseScreen, Booth.QuickRestart parent)
+        static private void ActuallyResetGame(PauseScreenController pauseScreen, Booth.QuickRestart parent, bool startNewGame)
         {
             if (!(pauseScreen is null))
             {
@@ -156,7 +156,10 @@ namespace QuickRestart
             if (IsMultiplayerHost())
             {
                 RoR2.NetworkSession.instance.EndRun();
-                parent.StartCoroutine(StartNewGameMultiplayer());
+                if (startNewGame)
+                {
+                    parent.StartCoroutine(StartNewGameMultiplayer());
+                }
             }
             else
             {
@@ -165,7 +168,10 @@ namespace QuickRestart
                 {
                     UnityEngine.Object.Destroy(Run.instance.gameObject);//CCRunEnd
                 }
-                parent.StartCoroutine(StartNewGameSingleplayer());
+                if (startNewGame)
+                {
+                    parent.StartCoroutine(StartNewGameSingleplayer());
+                }
             }
         }
 
