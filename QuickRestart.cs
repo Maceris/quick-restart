@@ -15,7 +15,7 @@ namespace Booth
 {
     [NetworkCompatibility(CompatibilityLevel.NoNeedForSync)]
     [BepInDependency("com.bepis.r2api")]
-    [BepInPlugin("com.IkalaGaming.QuickRestart", "QuickRestart", "1.3.4")]
+    [BepInPlugin("com.IkalaGaming.QuickRestart", "QuickRestart", "1.3.5")]
     [R2APISubmoduleDependency(nameof(ResourcesAPI))]
     public class QuickRestart : BaseUnityPlugin
     {
@@ -117,12 +117,11 @@ namespace Booth
             {
                 bool InRun = !(Run.instance is null);
                 bool Multiplayer = PlayerCharacterMasterController.instances.Count > 1 && !BoothUtil.IsMultiplayerHost();
-                if (InRun && !Multiplayer)
+                if (InRun && !Multiplayer && !IsInChatBox)
                 {
                     // Done this way so we can have other things in the update function
                     HandleResetKey();
                 }
-                
             }
         }
 
@@ -154,6 +153,9 @@ namespace Booth
             Sprite buttonHighlightSprite = Sprite.Create(buttonHighlightTexture, buttonHighlightTextureDimensions, new Vector2(0, 0));
             Sprite buttonBorderSprite = Sprite.Create(buttonBorderTexture, buttonBorderTextureeDimensions, new Vector2(0, 0));
             Sprite buttonOutlineSprite = Sprite.Create(buttonOutlineTexture, buttonOutlineTextureeDimensions, new Vector2(0, 0));
+
+            On.RoR2.UI.ChatBox.FocusInputField += (orig, self) => { orig(self); IsInChatBox = true; };
+            On.RoR2.UI.ChatBox.UnfocusInputField += (orig, self) => { orig(self); IsInChatBox = false; };
 
             //Add restart button to the pause screen
             On.RoR2.UI.PauseScreenController.Awake += (orig, self) => {
@@ -307,5 +309,6 @@ namespace Booth
         private float TimeSpentHoldingKey = 0f;
         private float ResetKeyThreshold = 1f;
         private bool ResetAlready = false;
+        private bool IsInChatBox = false;
     }
 }
