@@ -5,6 +5,10 @@ The quick restart mod adds a button to the pause menu that allows you to start a
 
 **1.3.4**
 
+* Disable restart while in chat, so you can type normally
+
+**1.3.4**
+
 * Add button for going back to character select
 * Add config option to put the character select button wherever on the pause menu
 
