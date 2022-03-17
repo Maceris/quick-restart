@@ -163,22 +163,6 @@ namespace Booth
                 }
 
                 Rect firstButton = self.mainPanel.GetChild(0).GetChild(0).GetComponent<RectTransform>().rect;
-                print(self.mainPanel);
-                print(self.mainPanel.GetChild(0));
-                print(self.mainPanel.GetChild(0).GetChild(0));
-                print(firstButton);
-                Transform parent = self.mainPanel.parent;
-                while (parent.parent != null)
-                {
-                    print("Parent " + parent);
-                    foreach (PropertyDescriptor descriptor in TypeDescriptor.GetProperties(parent.gameObject))
-                    {
-                        string name = descriptor.Name;
-                        object value = descriptor.GetValue(parent.gameObject);
-                        print(name + "=" + value);
-                    }
-                    parent = parent.parent;
-                }
 
                 float ratio = Math.Max(Screen.width / 1920f, Screen.height / 1080f);
 
