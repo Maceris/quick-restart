@@ -1,6 +1,5 @@
 ﻿using BepInEx;
 using RoR2;
-using R2API;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -10,13 +9,13 @@ using R2API.Utils;
 using BepInEx.Configuration;
 using QuickRestart;
 using RoR2.UI;
+using System.ComponentModel;
 
 namespace Booth
 {
     [NetworkCompatibility(CompatibilityLevel.NoNeedForSync)]
-    [BepInDependency("com.bepis.r2api")]
-    [BepInPlugin("com.IkalaGaming.QuickRestart", "QuickRestart", "1.3.5")]
-    [R2APISubmoduleDependency(nameof(ResourcesAPI))]
+    [BepInDependency(R2API.R2API.PluginGUID)]
+    [BepInPlugin("com.IkalaGaming.QuickRestart", "QuickRestart", "1.4.0")]
     public class QuickRestart : BaseUnityPlugin
     {
        
@@ -62,7 +61,7 @@ namespace Booth
             {
                 ResetKeyCode = (KeyCode) Enum.Parse(typeof(KeyCode), ConfigResetKeyBind.Value);
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 ResetKeyCode = KeyCode.T;
             }
@@ -138,19 +137,16 @@ namespace Booth
 
             // Set up textures for the UI button
             Texture2D buttonTexture = bundle.LoadAsset<Texture2D>("Assets/Texture2D/Booth_texUICleanButton.png");
-            Texture2D buttonHighlightTexture = bundle.LoadAsset<Texture2D>("Assets/Texture2D/Booth_texUIHighlightHeader.png");
             Texture2D buttonBorderTexture = bundle.LoadAsset<Texture2D>("Assets/Texture2D/Booth_texUIOutlineOnly.png");
             Texture2D buttonOutlineTexture = bundle.LoadAsset<Texture2D>("Assets/Texture2D/Booth_texUIHighlightBoxOutlineThick.png");
 
             // Needed to convert the textures to sprites
             Rect buttonTextureDimensions = new Rect(0, 0, buttonTexture.width, buttonTexture.height);
-            Rect buttonHighlightTextureDimensions = new Rect(0, 0, buttonHighlightTexture.width, buttonHighlightTexture.height);
             Rect buttonBorderTextureeDimensions = new Rect(0, 0, buttonBorderTexture.width, buttonBorderTexture.height);
             Rect buttonOutlineTextureeDimensions = new Rect(0, 0, buttonOutlineTexture.width, buttonOutlineTexture.height);
 
             // Used to draw the button on UI
             Sprite buttonSprite = Sprite.Create(buttonTexture, buttonTextureDimensions, new Vector2(0, 0));
-            Sprite buttonHighlightSprite = Sprite.Create(buttonHighlightTexture, buttonHighlightTextureDimensions, new Vector2(0, 0));
             Sprite buttonBorderSprite = Sprite.Create(buttonBorderTexture, buttonBorderTextureeDimensions, new Vector2(0, 0));
             Sprite buttonOutlineSprite = Sprite.Create(buttonOutlineTexture, buttonOutlineTextureeDimensions, new Vector2(0, 0));
 
@@ -165,25 +161,24 @@ namespace Booth
                     // Don't show in lobby
                     return;
                 }
-                
-                Vector2 buttonSize = new Vector2(320, 48);
-                GameObject button = BoothUtil.CreateButton(self.mainPanel.GetChild(0).gameObject, buttonSize, buttonSprite);
 
-                // Add in the stylized highlight/border
-                List<Image> images = new List<Image>();
-                BoothUtil.SpawnImage(images, button, new Color(1, 1, 1, 1), new Vector2(0.5f, 0.5f), new Vector2(-6, -6), new Vector2(6, 6), buttonHighlightSprite);
-                images[images.Count - 1].gameObject.SetActive(false);
+                Rect firstButton = self.mainPanel.GetChild(0).GetChild(0).GetComponent<RectTransform>().rect;
+
+                float ratio = Math.Max(Screen.width / 1920f, Screen.height / 1080f);
+
+                Vector2 buttonSize = new Vector2(firstButton.width * ratio, firstButton.height * ratio);
+                GameObject button = BoothUtil.CreateButton(self.mainPanel.GetChild(0), buttonSize, buttonSprite);
 
                 // Add in the sharp white border line
-                BoothUtil.SpawnImage(new List<Image>(), button, new Color(1, 1, 1, 0.286f), new Vector2(0.5f, 0.5f), new Vector2(0, 0), new Vector2(0, 0), buttonBorderSprite);
+                BoothUtil.SpawnImage(button, new Color(1, 1, 1, 0.286f), new Vector2(0.5f, 0.5f), new Vector2(0, 0), new Vector2(0, 0), buttonBorderSprite);
 
                 // Add in the thicker surrounding outline for when you hover on the button
-                Image highlightImage = BoothUtil.SpawnImage(new List<Image>(), button, new Color(1, 1, 1, 1), new Vector2(0.5f, 0.5f), new Vector2(-4, -12), new Vector2(14, 4), buttonOutlineSprite);
-                button.GetComponent<RoR2.UI.HGButton>().imageOnHover = highlightImage;
+                Image outlineImage = BoothUtil.SpawnImage(button, new Color(1, 1, 1, 1), new Vector2(0.5f, 0.5f), new Vector2(-4 * ratio, -12 * ratio), new Vector2(14 * ratio, 4 * ratio), buttonOutlineSprite);
+                button.GetComponent<RoR2.UI.HGButton>().imageOnHover = outlineImage;
 
                 // Add in the restart text
                 List<TMPro.TextMeshProUGUI> buttonText = new List<TMPro.TextMeshProUGUI>();
-                BoothUtil.CreateText(buttonText, button, new Color(1, 1, 1, 1), 24, 0, new Vector2(12, 4), new Vector2(-12, -4), "Restart");
+                BoothUtil.CreateText(buttonText, button, new Color(1, 1, 1, 1), 24 * ratio, 0, new Vector2(12 * ratio, 4 * ratio), new Vector2(-12 * ratio, -4 * ratio), "Restart");
 
                 if ("top".Equals(ConfigRestartButtonPosition.Value, StringComparison.InvariantCultureIgnoreCase))
                 {
@@ -208,7 +203,7 @@ namespace Booth
                         }
                         button.transform.SetSiblingIndex(position);
                     }
-                    catch (FormatException e)
+                    catch (FormatException)
                     {
                         //default to bottom
                         button.transform.SetAsLastSibling();
@@ -236,24 +231,23 @@ namespace Booth
                     return;
                 }
 
-                Vector2 buttonSize = new Vector2(320, 48);
-                GameObject button = BoothUtil.CreateButton(self.mainPanel.GetChild(0).gameObject, buttonSize, buttonSprite);
+                Rect firstButton = self.mainPanel.GetChild(0).GetChild(0).GetComponent<RectTransform>().rect;
 
-                // Add in the stylized highlight/border
-                List<Image> images = new List<Image>();
-                BoothUtil.SpawnImage(images, button, new Color(1, 1, 1, 1), new Vector2(0.5f, 0.5f), new Vector2(-6, -6), new Vector2(6, 6), buttonHighlightSprite);
-                images[images.Count - 1].gameObject.SetActive(false);
+                float ratio = Math.Max(Screen.width / 1920f, Screen.height / 1080f);
+
+                Vector2 buttonSize = new Vector2(firstButton.width * ratio, firstButton.height * ratio);
+                GameObject button = BoothUtil.CreateButton(self.mainPanel.GetChild(0), buttonSize, buttonSprite);
 
                 // Add in the sharp white border line
-                BoothUtil.SpawnImage(new List<Image>(), button, new Color(1, 1, 1, 0.286f), new Vector2(0.5f, 0.5f), new Vector2(0, 0), new Vector2(0, 0), buttonBorderSprite);
+                BoothUtil.SpawnImage(button, new Color(1, 1, 1, 0.286f), new Vector2(0.5f, 0.5f), new Vector2(0, 0), new Vector2(0, 0), buttonBorderSprite);
 
                 // Add in the thicker surrounding outline for when you hover on the button
-                Image highlightImage = BoothUtil.SpawnImage(new List<Image>(), button, new Color(1, 1, 1, 1), new Vector2(0.5f, 0.5f), new Vector2(-4, -12), new Vector2(14, 4), buttonOutlineSprite);
-                button.GetComponent<RoR2.UI.HGButton>().imageOnHover = highlightImage;
+                Image outlineImage = BoothUtil.SpawnImage(button, new Color(1, 1, 1, 1), new Vector2(0.5f, 0.5f), new Vector2(-4 * ratio, -12 * ratio), new Vector2(14 * ratio, 4 * ratio), buttonOutlineSprite);
+                button.GetComponent<RoR2.UI.HGButton>().imageOnHover = outlineImage;
 
                 // Add in the character select text
                 List<TMPro.TextMeshProUGUI> buttonText = new List<TMPro.TextMeshProUGUI>();
-                BoothUtil.CreateText(buttonText, button, new Color(1, 1, 1, 1), 24, 0, new Vector2(12, 4), new Vector2(-12, -4), "Character Select");
+                BoothUtil.CreateText(buttonText, button, new Color(1, 1, 1, 1), 24 * ratio, 0, new Vector2(12 * ratio, 4 * ratio), new Vector2(-12 * ratio, -4 * ratio), "Character Select");
 
                 if ("top".Equals(ConfigCharacterButtonPosition.Value, StringComparison.InvariantCultureIgnoreCase))
                 {
@@ -278,7 +272,7 @@ namespace Booth
                         }
                         button.transform.SetSiblingIndex(position);
                     }
-                    catch (FormatException e)
+                    catch (FormatException)
                     {
                         //default to bottom
                         button.transform.SetAsLastSibling();
