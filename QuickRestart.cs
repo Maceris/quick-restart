@@ -1,6 +1,5 @@
 ﻿using BepInEx;
 using RoR2;
-using R2API;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -14,9 +13,8 @@ using RoR2.UI;
 namespace Booth
 {
     [NetworkCompatibility(CompatibilityLevel.NoNeedForSync)]
-    [BepInDependency("com.bepis.r2api")]
-    [BepInPlugin("com.IkalaGaming.QuickRestart", "QuickRestart", "1.3.5")]
-    [R2APISubmoduleDependency(nameof(ResourcesAPI))]
+    [BepInDependency(R2API.R2API.PluginGUID)]
+    [BepInPlugin("com.IkalaGaming.QuickRestart", "QuickRestart", "1.4.0")]
     public class QuickRestart : BaseUnityPlugin
     {
        
@@ -62,7 +60,7 @@ namespace Booth
             {
                 ResetKeyCode = (KeyCode) Enum.Parse(typeof(KeyCode), ConfigResetKeyBind.Value);
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 ResetKeyCode = KeyCode.T;
             }
@@ -208,7 +206,7 @@ namespace Booth
                         }
                         button.transform.SetSiblingIndex(position);
                     }
-                    catch (FormatException e)
+                    catch (FormatException)
                     {
                         //default to bottom
                         button.transform.SetAsLastSibling();
@@ -278,7 +276,7 @@ namespace Booth
                         }
                         button.transform.SetSiblingIndex(position);
                     }
-                    catch (FormatException e)
+                    catch (FormatException)
                     {
                         //default to bottom
                         button.transform.SetAsLastSibling();

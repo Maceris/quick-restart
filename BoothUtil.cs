@@ -16,16 +16,20 @@ namespace QuickRestart
         static public GameObject CreateButton(GameObject parent, Vector2 size, Sprite sprite)
         {
             // Set up the colors used for the button
-            ColorBlock colorBlock = new ColorBlock();
-            colorBlock.disabledColor = new Color(0.255f, 0.201f, 0.201f, 0.714f);
-            colorBlock.highlightedColor = new Color(0.988f, 1.000f, 0.693f, 0.733f);
-            colorBlock.normalColor = new Color(0.327f, 0.403f, 0.472f, 1.000f);
-            colorBlock.pressedColor = new Color(0.740f, 0.755f, 0.445f, 0.984f);
-            colorBlock.colorMultiplier = 1;
+            ColorBlock colorBlock = new ColorBlock
+            {
+                disabledColor = new Color(0.255f, 0.201f, 0.201f, 0.714f),
+                highlightedColor = new Color(0.988f, 1.000f, 0.693f, 0.733f),
+                normalColor = new Color(0.327f, 0.403f, 0.472f, 1.000f),
+                pressedColor = new Color(0.740f, 0.755f, 0.445f, 0.984f),
+                colorMultiplier = 1
+            };
 
             // The base game object
-            GameObject button = new GameObject();
-            button.name = "Button";
+            GameObject button = new GameObject
+            {
+                name = "Button"
+            };
             button.transform.parent = parent.transform;
             button.AddComponent<RoR2.UI.MPEventSystemLocator>();
 
@@ -59,8 +63,10 @@ namespace QuickRestart
         static public void CreateText(List<TMPro.TextMeshProUGUI> texts, GameObject parent, Color colour, float size, float textOffset, Vector2 offsetMin, Vector2 offsetMax, String contents)
         {
             // The base game object for the text
-            GameObject text = new GameObject();
-            text.name = "Text";
+            GameObject text = new GameObject
+            {
+                name = "Text"
+            };
             text.transform.parent = parent.transform;
 
             // Actually create the text
@@ -86,8 +92,10 @@ namespace QuickRestart
         static public Image SpawnImage(List<Image> images, GameObject parent, Color color, Vector2 pivot, Vector2 offsetMin, Vector2 offsetMax, Sprite sprite)
         {
             // The base game object for the image
-            GameObject image = new GameObject();
-            image.name = "Image";
+            GameObject image = new GameObject
+            {
+                name = "Image"
+            };
             image.transform.parent = parent.transform;
 
             // Set up the size of the image
