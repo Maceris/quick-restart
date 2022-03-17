@@ -3,6 +3,11 @@ The quick restart mod adds a button to the pause menu that allows you to start a
 
 # Changelog
 
+**1.4.0**
+
+* Update to work in Survivors of the Void
+* Scale buttons with screen size
+
 **1.3.5**
 
 * Disable restart while in chat, so you can type normally

@@ -4,7 +4,6 @@ using RoR2.UI;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Threading;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.UI;
@@ -13,7 +12,7 @@ namespace QuickRestart
 {
     class BoothUtil
     {
-        static public GameObject CreateButton(GameObject parent, Vector2 size, Sprite sprite)
+        static public GameObject CreateButton(Transform parent, Vector2 size, Sprite sprite)
         {
             // Set up the colors used for the button
             ColorBlock colorBlock = new ColorBlock
@@ -30,7 +29,7 @@ namespace QuickRestart
             {
                 name = "Button"
             };
-            button.transform.parent = parent.transform;
+            button.transform.parent = parent;
             button.AddComponent<RoR2.UI.MPEventSystemLocator>();
 
             // The graphical part
@@ -49,13 +48,10 @@ namespace QuickRestart
 
             // Used to set the size of the button
             RectTransform buttonTransform = button.GetComponent<RectTransform>();
-            buttonTransform.pivot = new Vector2(0, 0);
-            buttonTransform.anchorMin = new Vector2(0.5f, 0.5f);
-            buttonTransform.anchorMax = new Vector2(0.5f, 0.5f);
-            buttonTransform.anchoredPosition = new Vector2(0.5f, 0.5f);
+            buttonTransform.anchorMin = new Vector2(0f, 1f);
+            buttonTransform.anchorMax = new Vector2(0f, 1f);
             buttonTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, size.x);
             buttonTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, size.y);
-            buttonTransform.localScale = new Vector3(1, 1, 1);
 
             return button;
         }
@@ -89,7 +85,7 @@ namespace QuickRestart
             texts.Add(textMesh);
         }
 
-        static public Image SpawnImage(List<Image> images, GameObject parent, Color color, Vector2 pivot, Vector2 offsetMin, Vector2 offsetMax, Sprite sprite)
+        static public Image SpawnImage(GameObject parent, Color color, Vector2 pivot, Vector2 offsetMin, Vector2 offsetMax, Sprite sprite)
         {
             // The base game object for the image
             GameObject image = new GameObject
@@ -113,7 +109,6 @@ namespace QuickRestart
             actualImage.sprite = sprite;
             actualImage.type = Image.Type.Sliced;
             actualImage.raycastTarget = false;
-            images.Add(actualImage);
 
             return actualImage;
         }
