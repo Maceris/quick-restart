@@ -11,6 +11,7 @@ The quick restart mod adds a button to the pause menu that allows you to start a
 Known Bugs:
 * Highlight on hover is weird, half the time is transparent instead of yellow
 * On low resolutions, the buttons are cramped
+* Button textures scale with texture resolution
 
 **1.3.5**
 
