@@ -33,8 +33,8 @@
     <Reference Include="com.unity.multiplayer-hlapi">
       <HintPath>..\dlls\com.unity.multiplayer-hlapi.Runtime.dll</HintPath>
     </Reference>
-    <Reference Include="MMHOOK_RoR2">
-      <HintPath>..\dlls\MMHOOK_RoR2.dll</HintPath>
+    <Reference Include="MMHOOK_Assembly-CSharp">
+      <HintPath>..\dlls\MMHOOK_Assembly-CSharp.dll</HintPath>
     </Reference>
     <Reference Include="Mono.Cecil">
       <HintPath>..\dlls\Mono.Cecil.dll</HintPath>
