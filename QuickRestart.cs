@@ -9,13 +9,12 @@ using R2API.Utils;
 using BepInEx.Configuration;
 using QuickRestart;
 using RoR2.UI;
-using System.ComponentModel;
 
 namespace Booth
 {
     [NetworkCompatibility(CompatibilityLevel.NoNeedForSync)]
     [BepInDependency(R2API.R2API.PluginGUID)]
-    [BepInPlugin("com.IkalaGaming.QuickRestart", "QuickRestart", "1.4.1")]
+    [BepInPlugin("com.IkalaGaming.QuickRestart", "QuickRestart", "1.4.2")]
     public class QuickRestart : BaseUnityPlugin
     {
        

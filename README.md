@@ -3,6 +3,10 @@ The quick restart mod adds a button to the pause menu that allows you to start a
 
 # Changelog
 
+**1.4.2**
+
+* Update manifest, build against new version of R2API
+
 **1.4.1**
 
 * New build for new game version (1.2.3.1)
