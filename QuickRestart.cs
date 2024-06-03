@@ -9,12 +9,32 @@ using R2API.Utils;
 using BepInEx.Configuration;
 using QuickRestart;
 using RoR2.UI;
+using BepInEx.Logging;
+using TMPro;
 
 namespace Booth
 {
+
+    internal static class Log
+    {
+        private static ManualLogSource _logSource;
+
+        internal static void Init(ManualLogSource logSource)
+        {
+            _logSource = logSource;
+        }
+
+        internal static void Debug(object data) => _logSource.LogDebug(data);
+        internal static void Error(object data) => _logSource.LogError(data);
+        internal static void Fatal(object data) => _logSource.LogFatal(data);
+        internal static void Info(object data) => _logSource.LogInfo(data);
+        internal static void Message(object data) => _logSource.LogMessage(data);
+        internal static void Warning(object data) => _logSource.LogWarning(data);
+    }
+
     [NetworkCompatibility(CompatibilityLevel.NoNeedForSync)]
     [BepInDependency(R2API.R2API.PluginGUID)]
-    [BepInPlugin("com.IkalaGaming.QuickRestart", "QuickRestart", "1.4.2")]
+    [BepInPlugin("com.IkalaGaming.QuickRestart", "QuickRestart", "1.5.0")]
     public class QuickRestart : BaseUnityPlugin
     {
        
@@ -125,6 +145,7 @@ namespace Booth
 
         public void Awake()
         {
+            Log.Init(Logger);
             SetupConfig();
 
             AssetBundle bundle;
@@ -152,7 +173,6 @@ namespace Booth
             On.RoR2.UI.ChatBox.FocusInputField += (orig, self) => { orig(self); IsInChatBox = true; };
             On.RoR2.UI.ChatBox.UnfocusInputField += (orig, self) => { orig(self); IsInChatBox = false; };
 
-            //Add restart button to the pause screen
             On.RoR2.UI.PauseScreenController.Awake += (orig, self) => {
                 orig(self);
                 if (Run.instance is null || PreGameController.instance)
@@ -160,32 +180,31 @@ namespace Booth
                     // Don't show in lobby
                     return;
                 }
+                Transform firstButton = self.mainPanel.GetChild(0).GetChild(0);
 
-                Rect firstButton = self.mainPanel.GetChild(0).GetChild(0).GetComponent<RectTransform>().rect;
+                //Add restart button to the pause screen
 
-                float ratio = Math.Max(Screen.width / 1920f, Screen.height / 1080f);
+                Transform restartButton = Instantiate(firstButton, self.mainPanel.GetChild(0));
 
-                Vector2 buttonSize = new Vector2(firstButton.width * ratio, firstButton.height * ratio);
-                GameObject button = BoothUtil.CreateButton(self.mainPanel.GetChild(0), buttonSize, buttonSprite);
+                TextMeshProUGUI originalRestartText = restartButton.GetComponentInChildren<HGTextMeshProUGUI>();
+                originalRestartText.text = "Restart";
+                //The GUI refuses to update without literally replacing the component
+                Transform originalRestartTextParent = originalRestartText.transform.parent;
+                TextMeshProUGUI newRestartText = Instantiate(originalRestartText, originalRestartTextParent);
+                Destroy(originalRestartText);
 
-                // Add in the sharp white border line
-                BoothUtil.SpawnImage(button, new Color(1, 1, 1, 0.286f), new Vector2(0.5f, 0.5f), new Vector2(0, 0), new Vector2(0, 0), buttonBorderSprite);
-
-                // Add in the thicker surrounding outline for when you hover on the button
-                Image outlineImage = BoothUtil.SpawnImage(button, new Color(1, 1, 1, 1), new Vector2(0.5f, 0.5f), new Vector2(-4 * ratio, -12 * ratio), new Vector2(14 * ratio, 4 * ratio), buttonOutlineSprite);
-                button.GetComponent<RoR2.UI.HGButton>().imageOnHover = outlineImage;
-
-                // Add in the restart text
-                List<TMPro.TextMeshProUGUI> buttonText = new List<TMPro.TextMeshProUGUI>();
-                BoothUtil.CreateText(buttonText, button, new Color(1, 1, 1, 1), 24 * ratio, 0, new Vector2(12 * ratio, 4 * ratio), new Vector2(-12 * ratio, -4 * ratio), "Restart");
+                restartButton.GetComponentInChildren<HGButton>().onClick.RemoveAllListeners();
+                restartButton.GetComponentInChildren<HGButton>().onClick.AddListener(() => {
+                    BoothUtil.ResetGame(self, ConfigConfirmationDialog.Value, this, true);
+                });
 
                 if ("top".Equals(ConfigRestartButtonPosition.Value, StringComparison.InvariantCultureIgnoreCase))
                 {
-                    button.transform.SetAsFirstSibling();
+                    restartButton.transform.SetAsFirstSibling();
                 }
                 else if ("bottom".Equals(ConfigRestartButtonPosition.Value, StringComparison.InvariantCultureIgnoreCase))
                 {
-                    button.transform.SetAsLastSibling();
+                    restartButton.transform.SetAsLastSibling();
                 }
                 else
                 {
@@ -196,65 +215,49 @@ namespace Booth
                         {
                             position = 0;
                         }
-                        else if (position >= button.transform.parent.childCount)
+                        else if (position >= restartButton.transform.parent.childCount)
                         {
-                            position = button.transform.parent.childCount - 1;
+                            position = restartButton.transform.parent.childCount - 1;
                         }
-                        button.transform.SetSiblingIndex(position);
+                        restartButton.transform.SetSiblingIndex(position);
                     }
                     catch (FormatException)
                     {
                         //default to bottom
-                        button.transform.SetAsLastSibling();
+                        restartButton.transform.SetAsLastSibling();
                     }
                 }
                 
                 if (PlayerCharacterMasterController.instances.Count > 1 && !BoothUtil.IsMultiplayerHost())
                 {
                     // Disable on multiplayer, unless they are the host
-                    button.SetActive(false);
+                    restartButton.gameObject.SetActive(false);
                 }
 
                 // Set up what to do when the button is clicked
-                button.GetComponent<RoR2.UI.HGButton>().onClick.AddListener(() => {
+                restartButton.GetComponent<RoR2.UI.HGButton>().onClick.AddListener(() => {
                     BoothUtil.ResetGame(self, ConfigConfirmationDialog.Value, this, true);
                 });
-            };
 
-            //Add Back to Character Select to the pause screen
-            On.RoR2.UI.PauseScreenController.Awake += (orig, self) => {
-                orig(self);
-                if (Run.instance is null || PreGameController.instance)
-                {
-                    // Don't show in lobby
-                    return;
-                }
 
-                Rect firstButton = self.mainPanel.GetChild(0).GetChild(0).GetComponent<RectTransform>().rect;
+                //Add Back to Character Select to the pause screen
 
-                float ratio = Math.Max(Screen.width / 1920f, Screen.height / 1080f);
+                Transform characterSelectButton = Instantiate(firstButton, self.mainPanel.GetChild(0));
 
-                Vector2 buttonSize = new Vector2(firstButton.width * ratio, firstButton.height * ratio);
-                GameObject button = BoothUtil.CreateButton(self.mainPanel.GetChild(0), buttonSize, buttonSprite);
-
-                // Add in the sharp white border line
-                BoothUtil.SpawnImage(button, new Color(1, 1, 1, 0.286f), new Vector2(0.5f, 0.5f), new Vector2(0, 0), new Vector2(0, 0), buttonBorderSprite);
-
-                // Add in the thicker surrounding outline for when you hover on the button
-                Image outlineImage = BoothUtil.SpawnImage(button, new Color(1, 1, 1, 1), new Vector2(0.5f, 0.5f), new Vector2(-4 * ratio, -12 * ratio), new Vector2(14 * ratio, 4 * ratio), buttonOutlineSprite);
-                button.GetComponent<RoR2.UI.HGButton>().imageOnHover = outlineImage;
-
-                // Add in the character select text
-                List<TMPro.TextMeshProUGUI> buttonText = new List<TMPro.TextMeshProUGUI>();
-                BoothUtil.CreateText(buttonText, button, new Color(1, 1, 1, 1), 24 * ratio, 0, new Vector2(12 * ratio, 4 * ratio), new Vector2(-12 * ratio, -4 * ratio), "Character Select");
+                TextMeshProUGUI originalCharacterSelectText = characterSelectButton.GetComponentInChildren<HGTextMeshProUGUI>();
+                originalCharacterSelectText.text = "Character Select";
+                //The GUI refuses to update without literally replacing the component
+                Transform originalCharacterSelectTextParent = originalCharacterSelectText.transform.parent;
+                TextMeshProUGUI newCharacterSelectText = Instantiate(originalCharacterSelectText, originalCharacterSelectTextParent);
+                Destroy(originalCharacterSelectText);
 
                 if ("top".Equals(ConfigCharacterButtonPosition.Value, StringComparison.InvariantCultureIgnoreCase))
                 {
-                    button.transform.SetAsFirstSibling();
+                    characterSelectButton.transform.SetAsFirstSibling();
                 }
                 else if ("bottom".Equals(ConfigCharacterButtonPosition.Value, StringComparison.InvariantCultureIgnoreCase))
                 {
-                    button.transform.SetAsLastSibling();
+                    characterSelectButton.transform.SetAsLastSibling();
                 }
                 else
                 {
@@ -265,29 +268,31 @@ namespace Booth
                         {
                             position = 0;
                         }
-                        else if (position >= button.transform.parent.childCount)
+                        else if (position >= characterSelectButton.transform.parent.childCount)
                         {
-                            position = button.transform.parent.childCount - 1;
+                            position = characterSelectButton.transform.parent.childCount - 1;
                         }
-                        button.transform.SetSiblingIndex(position);
+                        characterSelectButton.transform.SetSiblingIndex(position);
                     }
                     catch (FormatException)
                     {
                         //default to bottom
-                        button.transform.SetAsLastSibling();
+                        characterSelectButton.transform.SetAsLastSibling();
                     }
                 }
 
                 if (PlayerCharacterMasterController.instances.Count > 1 && !BoothUtil.IsMultiplayerHost())
                 {
                     // Disable on multiplayer, unless they are the host
-                    button.SetActive(false);
+                    characterSelectButton.gameObject.SetActive(false);
                 }
 
-                // Set up what to do when the button is clicked
-                button.GetComponent<RoR2.UI.HGButton>().onClick.AddListener(() => {
+                characterSelectButton.GetComponentInChildren<HGButton>().onClick.RemoveAllListeners();
+                characterSelectButton.GetComponent<HGButton>().onClick.AddListener(() => {
                     BoothUtil.ResetGame(self, ConfigConfirmationDialog.Value, this, false);
                 });
+
+
             };
         }
         
