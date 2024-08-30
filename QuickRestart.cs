@@ -155,7 +155,7 @@ namespace Booth
                     // Don't show in lobby
                     return;
                 }
-                Transform firstButton = self.mainPanel.GetChild(0).GetChild(0);
+                Transform firstButton = self.mainPanel.GetChild(0).GetChild(1);
 
                 //Add restart button to the pause screen
 
