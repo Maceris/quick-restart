@@ -1,10 +1,7 @@
 ﻿using BepInEx;
 using RoR2;
 using System;
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
-using System.Reflection;
 using R2API.Utils;
 using BepInEx.Configuration;
 using QuickRestart;
@@ -34,41 +31,41 @@ namespace Booth
 
     [NetworkCompatibility(CompatibilityLevel.NoNeedForSync)]
     [BepInDependency(R2API.R2API.PluginGUID)]
-    [BepInPlugin("com.IkalaGaming.QuickRestart", "QuickRestart", "1.5.0")]
+    [BepInPlugin("com.IkalaGaming.QuickRestart", "QuickRestart", "1.5.1")]
     public class QuickRestart : BaseUnityPlugin
     {
        
         public void SetupConfig()
         {
-            ConfigRestartButtonPosition = Config.Bind<String>(
+            ConfigRestartButtonPosition = Config.Bind(
             "Graphics",
             "RestartPosition",
             "bottom",
             "The position of the restart button in the pause menu. Options are 'top', 'bottom', or the number of positions away from the top, so '1' would be 1 below the top item and thus second in the list. Falls back to default if you give weird values."
             );
 
-            ConfigCharacterButtonPosition = Config.Bind<String>(
+            ConfigCharacterButtonPosition = Config.Bind(
             "Graphics",
             "CharacterPosition",
             "bottom",
             "The position of the character select button in the pause menu. Options are 'top', 'bottom', or the number of positions away from the top, so '1' would be 1 below the top item and thus second in the list. Falls back to default if you give weird values. Evaluated after the restart button is placed."
             );
 
-            ConfigConfirmationDialog = Config.Bind<bool>(
+            ConfigConfirmationDialog = Config.Bind(
             "Graphics",
             "ConfirmationDialogEnabled",
             false,
             "Enables a confirmation dialog when trying to reset so it is not done accidentally"
             );
 
-            ConfigResetKeyEnabled = Config.Bind<bool>(
+            ConfigResetKeyEnabled = Config.Bind(
             "Keybind",
             "ResetKeyEnabled",
             false,
             "Allows a key press to be used to reset runs in addition to the menu"
             );
 
-            ConfigResetKeyBind = Config.Bind<String>(
+            ConfigResetKeyBind = Config.Bind(
             "Keybind",
             "ResetKeyBind",
             "T",
@@ -85,7 +82,7 @@ namespace Booth
                 ResetKeyCode = KeyCode.T;
             }
 
-            ConfigResetKeyHoldTime = Config.Bind<float>(
+            ConfigResetKeyHoldTime = Config.Bind(
             "Keybind",
             "ResetKeyHoldTime",
             1.0f,
@@ -147,28 +144,6 @@ namespace Booth
         {
             Log.Init(Logger);
             SetupConfig();
-
-            AssetBundle bundle;
-            // Make our assets available to load
-            using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("QuickRestart.booth_assets"))
-            {
-                bundle = AssetBundle.LoadFromStream(stream);
-            }
-
-            // Set up textures for the UI button
-            Texture2D buttonTexture = bundle.LoadAsset<Texture2D>("Assets/Texture2D/Booth_texUICleanButton.png");
-            Texture2D buttonBorderTexture = bundle.LoadAsset<Texture2D>("Assets/Texture2D/Booth_texUIOutlineOnly.png");
-            Texture2D buttonOutlineTexture = bundle.LoadAsset<Texture2D>("Assets/Texture2D/Booth_texUIHighlightBoxOutlineThick.png");
-
-            // Needed to convert the textures to sprites
-            Rect buttonTextureDimensions = new Rect(0, 0, buttonTexture.width, buttonTexture.height);
-            Rect buttonBorderTextureeDimensions = new Rect(0, 0, buttonBorderTexture.width, buttonBorderTexture.height);
-            Rect buttonOutlineTextureeDimensions = new Rect(0, 0, buttonOutlineTexture.width, buttonOutlineTexture.height);
-
-            // Used to draw the button on UI
-            Sprite buttonSprite = Sprite.Create(buttonTexture, buttonTextureDimensions, new Vector2(0, 0));
-            Sprite buttonBorderSprite = Sprite.Create(buttonBorderTexture, buttonBorderTextureeDimensions, new Vector2(0, 0));
-            Sprite buttonOutlineSprite = Sprite.Create(buttonOutlineTexture, buttonOutlineTextureeDimensions, new Vector2(0, 0));
 
             On.RoR2.UI.ChatBox.FocusInputField += (orig, self) => { orig(self); IsInChatBox = true; };
             On.RoR2.UI.ChatBox.UnfocusInputField += (orig, self) => { orig(self); IsInChatBox = false; };
@@ -292,14 +267,13 @@ namespace Booth
                     BoothUtil.ResetGame(self, ConfigConfirmationDialog.Value, this, false);
                 });
 
-
             };
         }
         
-        public static ConfigEntry<String> ConfigRestartButtonPosition { get; set; }
-        public static ConfigEntry<String> ConfigCharacterButtonPosition { get; set; }
+        public static ConfigEntry<string> ConfigRestartButtonPosition { get; set; }
+        public static ConfigEntry<string> ConfigCharacterButtonPosition { get; set; }
         public static ConfigEntry<bool> ConfigResetKeyEnabled { get; set; }
-        public static ConfigEntry<String> ConfigResetKeyBind { get; set; }
+        public static ConfigEntry<string> ConfigResetKeyBind { get; set; }
         public static ConfigEntry<float> ConfigResetKeyHoldTime { get; set; }
         public static ConfigEntry<bool> ConfigConfirmationDialog { get; set; }
 

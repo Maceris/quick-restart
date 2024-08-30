@@ -1,18 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFramework>netstandard2.1</TargetFramework>
   </PropertyGroup>
-
-  <ItemGroup>
-    <None Remove="booth_assets" />
-    <None Remove="booth_assets.manifest" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <EmbeddedResource Include="booth_assets" />
-    <EmbeddedResource Include="booth_assets.manifest" />
-  </ItemGroup>
 
   <ItemGroup>
     <Reference Include="0Harmony">
@@ -34,7 +24,7 @@
       <HintPath>..\dlls\com.unity.multiplayer-hlapi.Runtime.dll</HintPath>
     </Reference>
     <Reference Include="MMHOOK_Assembly-CSharp">
-      <HintPath>..\dlls\MMHOOK_RoR2.dll</HintPath>
+      <HintPath>..\dlls\MMHOOK_Assembly-CSharp.dll</HintPath>
     </Reference>
     <Reference Include="Mono.Cecil">
       <HintPath>..\dlls\Mono.Cecil.dll</HintPath>
@@ -53,9 +43,6 @@
     </Reference>
     <Reference Include="MonoMod.Utils">
       <HintPath>..\dlls\MonoMod.Utils.dll</HintPath>
-    </Reference>
-    <Reference Include="R2API">
-      <HintPath>..\dlls\R2API.dll</HintPath>
     </Reference>
     <Reference Include="R2API">
       <HintPath>..\dlls\R2API.Core.dll</HintPath>
@@ -78,8 +65,11 @@
     <Reference Include="UnityEngine.InputLegacyModule">
       <HintPath>..\dlls\UnityEngine.InputLegacyModule.dll</HintPath>
     </Reference>
-    <Reference Include="UnityEngine.TextCoreModule">
-      <HintPath>..\dlls\UnityEngine.TextCoreModule.dll</HintPath>
+    <Reference Include="UnityEngine.TextCoreFontEngineModule">
+      <HintPath>..\dlls\UnityEngine.TextCoreFontEngineModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.TextCoreTextEngineModule">
+      <HintPath>..\dlls\UnityEngine.TextCoreTextEngineModule.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.TextRenderingModule">
       <HintPath>..\dlls\UnityEngine.TextRenderingModule.dll</HintPath>

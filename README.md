@@ -3,6 +3,9 @@ The quick restart mod adds a button to the pause menu that allows you to start a
 
 # Changelog
 
+** 1.5.1**
+
+* New build for game version (1.3.1)
 
 **1.5.0**
 
