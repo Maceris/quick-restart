@@ -53,45 +53,24 @@ namespace QuickRestart
                 UnityEngine.Object.Destroy(pauseScreen.gameObject);
             }
 
-            if (IsMultiplayerHost())
+            if (!(Run.instance is null || Run.instance.gameObject is null))
             {
-                RoR2.NetworkSession.instance.EndRun();
-                if (startNewGame)
-                {
-                    parent.StartCoroutine(StartNewGameMultiplayer());
-                }
+                UnityEngine.Object.Destroy(Run.instance.gameObject);//CCRunEnd
+                UnityEngine.Object.Destroy(Run.instance);
             }
-            else
+            if (startNewGame)
             {
-                // This is probably deprecated after the Anniversary update
-                if (!(Run.instance is null || Run.instance.gameObject is null))
-                {
-                    UnityEngine.Object.Destroy(Run.instance.gameObject);//CCRunEnd
-                }
-                if (startNewGame)
-                {
-                    parent.StartCoroutine(StartNewGameSingleplayer());
-                }
+                parent.StartCoroutine(StartNewGame());
             }
         }
 
-        static private IEnumerator StartNewGameSingleplayer()
+        static private IEnumerator StartNewGame()
         {
             while (!PreGameController.instance)
             {
                 yield return new WaitForSeconds(0.1f);
             }
             PreGameController.instance.InvokeMethod("StartRun");//CCPregameStartRun
-        }
-
-        static private IEnumerator StartNewGameMultiplayer()
-        {
-            while (!PreGameController.instance)
-            {
-   
-                yield return new WaitForSeconds(0.1f);
-            }
-            PreGameController.instance.StartLaunch();
         }
     }
 }

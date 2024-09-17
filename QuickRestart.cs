@@ -11,7 +11,6 @@ using TMPro;
 
 namespace Booth
 {
-
     internal static class Log
     {
         private static ManualLogSource _logSource;
@@ -31,10 +30,9 @@ namespace Booth
 
     [NetworkCompatibility(CompatibilityLevel.NoNeedForSync)]
     [BepInDependency(R2API.R2API.PluginGUID)]
-    [BepInPlugin("com.IkalaGaming.QuickRestart", "QuickRestart", "1.5.1")]
+    [BepInPlugin("com.IkalaGaming.QuickRestart", "QuickRestart", "1.5.2")]
     public class QuickRestart : BaseUnityPlugin
     {
-       
         public void SetupConfig()
         {
             ConfigRestartButtonPosition = Config.Bind(
@@ -116,6 +114,7 @@ namespace Booth
                     }
                     TimeSpentHoldingKey = 0f;
                     ResetAlready = true;
+                    Log.Debug("Restarting from keybind");
                     BoothUtil.ResetGame(PauseScreen, ConfigConfirmationDialog.Value, this, true);
                 }
             }
@@ -170,6 +169,7 @@ namespace Booth
 
                 restartButton.GetComponentInChildren<HGButton>().onClick.RemoveAllListeners();
                 restartButton.GetComponentInChildren<HGButton>().onClick.AddListener(() => {
+                    Log.Debug("Restarting from button");
                     BoothUtil.ResetGame(self, ConfigConfirmationDialog.Value, this, true);
                 });
 
@@ -208,12 +208,6 @@ namespace Booth
                     // Disable on multiplayer, unless they are the host
                     restartButton.gameObject.SetActive(false);
                 }
-
-                // Set up what to do when the button is clicked
-                restartButton.GetComponent<RoR2.UI.HGButton>().onClick.AddListener(() => {
-                    BoothUtil.ResetGame(self, ConfigConfirmationDialog.Value, this, true);
-                });
-
 
                 //Add Back to Character Select to the pause screen
 
@@ -264,9 +258,9 @@ namespace Booth
 
                 characterSelectButton.GetComponentInChildren<HGButton>().onClick.RemoveAllListeners();
                 characterSelectButton.GetComponent<HGButton>().onClick.AddListener(() => {
+                    Log.Debug("Returning to Character Select from button");
                     BoothUtil.ResetGame(self, ConfigConfirmationDialog.Value, this, false);
                 });
-
             };
         }
         
