@@ -8,6 +8,7 @@ using QuickRestart;
 using RoR2.UI;
 using BepInEx.Logging;
 using TMPro;
+using UnityEngine.UI;
 
 namespace Booth
 {
@@ -30,7 +31,7 @@ namespace Booth
 
     [NetworkCompatibility(CompatibilityLevel.NoNeedForSync)]
     [BepInDependency(R2API.R2API.PluginGUID)]
-    [BepInPlugin("com.IkalaGaming.QuickRestart", "QuickRestart", "1.5.2")]
+    [BepInPlugin("com.IkalaGaming.QuickRestart", "QuickRestart", "1.5.3")]
     public class QuickRestart : BaseUnityPlugin
     {
         public void SetupConfig()
@@ -167,8 +168,9 @@ namespace Booth
                 TextMeshProUGUI newRestartText = Instantiate(originalRestartText, originalRestartTextParent);
                 Destroy(originalRestartText);
 
-                restartButton.GetComponentInChildren<HGButton>().onClick.RemoveAllListeners();
-                restartButton.GetComponentInChildren<HGButton>().onClick.AddListener(() => {
+                HGButton restartHGButton = restartButton.GetComponent<HGButton>();
+                restartHGButton.onClick = new Button.ButtonClickedEvent();
+                restartHGButton.onClick.AddListener(() => {
                     Log.Debug("Restarting from button");
                     BoothUtil.ResetGame(self, ConfigConfirmationDialog.Value, this, true);
                 });
@@ -256,8 +258,10 @@ namespace Booth
                     characterSelectButton.gameObject.SetActive(false);
                 }
 
-                characterSelectButton.GetComponentInChildren<HGButton>().onClick.RemoveAllListeners();
-                characterSelectButton.GetComponent<HGButton>().onClick.AddListener(() => {
+
+                HGButton characterSelectHGButton = characterSelectButton.GetComponent<HGButton>();
+                characterSelectHGButton.onClick = new Button.ButtonClickedEvent();
+                characterSelectHGButton.onClick.AddListener(() => {
                     Log.Debug("Returning to Character Select from button");
                     BoothUtil.ResetGame(self, ConfigConfirmationDialog.Value, this, false);
                 });

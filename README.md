@@ -3,6 +3,10 @@ The quick restart mod adds a button to the pause menu that allows you to start a
 
 # Changelog
 
+**1.5.3**
+
+* Bugfix for confirmation dialog
+
 **1.5.2**
 
 * Bugfixes for multiplayer

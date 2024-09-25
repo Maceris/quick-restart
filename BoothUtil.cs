@@ -1,7 +1,6 @@
 ﻿using R2API.Utils;
 using RoR2;
 using RoR2.UI;
-using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -21,7 +20,7 @@ namespace QuickRestart
                 }
                 SimpleDialogBox confirmation = SimpleDialogBox.Create();
                 confirmation.headerToken = new SimpleDialogBox.TokenParamsPair("Are you sure?");
-                String description = "Are you sure you want to reset this run?";
+                string description = "Are you sure you want to reset this run?";
                 if (pauseScreen is null)
                 {
                     description += " Use info screen button (usually tab/select) to move cursor.";
@@ -32,7 +31,8 @@ namespace QuickRestart
                 }, "Yes");
                 confirmation.AddCancelButton("Cancel");
 
-            } else
+            }
+            else
             {
                 // Avoid duplicate code but allow the dialog shenanigans
                 ActuallyResetGame(pauseScreen, parent, startNewGame);
@@ -46,12 +46,8 @@ namespace QuickRestart
 
         static private void ActuallyResetGame(PauseScreenController pauseScreen, Booth.QuickRestart parent, bool startNewGame)
         {
-            if (!(pauseScreen is null))
-            {
-                // Close the pause menu
-                pauseScreen.InvokeMethod("OnDisable");
-                UnityEngine.Object.Destroy(pauseScreen.gameObject);
-            }
+            // Close the pause menu
+            pauseScreen?.DestroyPauseScreen(true);
 
             if (!(Run.instance is null || Run.instance.gameObject is null))
             {
