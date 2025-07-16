@@ -97,4 +97,4 @@ Known Bugs:
 * Initial version
 
 # Contact
-If there are any issues with the mod, feel free to drop a message in the Discord channel at https://discord.gg/Sht4Q2gQHv or DM me (AceOfShades_#4150).
+If there are any issues with the mod, feel free to drop a message in the Discord channel at https://discord.gg/Sht4Q2gQHv or DM me (more_code).
