@@ -9,9 +9,12 @@ namespace QuickRestart
 {
     class BoothUtil
     {
-        static public void ResetGame(PauseScreenController pauseScreen, bool AskConfirmation, Booth.QuickRestart parent, bool startNewGame)
+        static public void ResetGame(PauseScreenController pauseScreen, bool AskConfirmation, 
+            bool skipConfirmationOnFirstLevel, Booth.QuickRestart parent, bool startNewGame)
         {
-            if (AskConfirmation)
+            bool needsConfirmation = AskConfirmation;
+
+            if (AskConfirmation && !(skipConfirmationOnFirstLevel && 0 == Run.instance.stageClearCount))
             {
                 if (SimpleDialogBox.instancesList.Count > 0)
                 {

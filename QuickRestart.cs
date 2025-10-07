@@ -31,7 +31,7 @@ namespace Booth
 
     [NetworkCompatibility(CompatibilityLevel.NoNeedForSync)]
     [BepInDependency(R2API.R2API.PluginGUID)]
-    [BepInPlugin("com.IkalaGaming.QuickRestart", "QuickRestart", "1.5.3")]
+    [BepInPlugin("com.IkalaGaming.QuickRestart", "QuickRestart", "1.6.0")]
     public class QuickRestart : BaseUnityPlugin
     {
         public void SetupConfig()
@@ -55,6 +55,13 @@ namespace Booth
             "ConfirmationDialogEnabled",
             false,
             "Enables a confirmation dialog when trying to reset so it is not done accidentally"
+            );
+
+            ConfigConfirmationDialogSkippedOnFirstStage = Config.Bind(
+            "Graphics",
+            "ConfirmationDialogSkippedOnFirstStage",
+            false,
+            "Skips the confirmation dialog on the first stage"
             );
 
             ConfigResetKeyEnabled = Config.Bind(
@@ -116,7 +123,8 @@ namespace Booth
                     TimeSpentHoldingKey = 0f;
                     ResetAlready = true;
                     Log.Debug("Restarting from keybind");
-                    BoothUtil.ResetGame(PauseScreen, ConfigConfirmationDialog.Value, this, true);
+                    BoothUtil.ResetGame(PauseScreen, ConfigConfirmationDialog.Value, 
+                        ConfigConfirmationDialogSkippedOnFirstStage.Value, this, true);
                 }
             }
             if (Input.GetKeyUp(ResetKeyCode))
@@ -172,7 +180,8 @@ namespace Booth
                 restartHGButton.onClick = new Button.ButtonClickedEvent();
                 restartHGButton.onClick.AddListener(() => {
                     Log.Debug("Restarting from button");
-                    BoothUtil.ResetGame(self, ConfigConfirmationDialog.Value, this, true);
+                    BoothUtil.ResetGame(self, ConfigConfirmationDialog.Value, 
+                        ConfigConfirmationDialogSkippedOnFirstStage.Value, this, true);
                 });
 
                 if ("top".Equals(ConfigRestartButtonPosition.Value, StringComparison.InvariantCultureIgnoreCase))
@@ -263,7 +272,8 @@ namespace Booth
                 characterSelectHGButton.onClick = new Button.ButtonClickedEvent();
                 characterSelectHGButton.onClick.AddListener(() => {
                     Log.Debug("Returning to Character Select from button");
-                    BoothUtil.ResetGame(self, ConfigConfirmationDialog.Value, this, false);
+                    BoothUtil.ResetGame(self, ConfigConfirmationDialog.Value, 
+                        ConfigConfirmationDialogSkippedOnFirstStage.Value, this, false);
                 });
             };
         }
@@ -274,6 +284,7 @@ namespace Booth
         public static ConfigEntry<string> ConfigResetKeyBind { get; set; }
         public static ConfigEntry<float> ConfigResetKeyHoldTime { get; set; }
         public static ConfigEntry<bool> ConfigConfirmationDialog { get; set; }
+        public static ConfigEntry<bool> ConfigConfirmationDialogSkippedOnFirstStage { get; set; }
 
         private static KeyCode ResetKeyCode = KeyCode.T;
         private float TimeSpentHoldingKey = 0f;
