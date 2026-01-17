@@ -31,7 +31,7 @@ namespace Booth
 
     [NetworkCompatibility(CompatibilityLevel.NoNeedForSync)]
     [BepInDependency(R2API.R2API.PluginGUID)]
-    [BepInPlugin("com.IkalaGaming.QuickRestart", "QuickRestart", "1.6.0")]
+    [BepInPlugin("com.IkalaGaming.QuickRestart", "QuickRestart", "1.6.1")]
     public class QuickRestart : BaseUnityPlugin
     {
         public void SetupConfig()
@@ -62,6 +62,13 @@ namespace Booth
             "ConfirmationDialogSkippedOnFirstStage",
             false,
             "Skips the confirmation dialog on the first stage"
+            );
+
+            ConfigDisableCharacterSelectButton = Config.Bind(
+            "Graphics",
+            "DisableCharacterSelectButton",
+            false,
+            "Disables (does not show) the character select button"
             );
 
             ConfigResetKeyEnabled = Config.Bind(
@@ -156,7 +163,8 @@ namespace Booth
             On.RoR2.UI.ChatBox.FocusInputField += (orig, self) => { orig(self); IsInChatBox = true; };
             On.RoR2.UI.ChatBox.UnfocusInputField += (orig, self) => { orig(self); IsInChatBox = false; };
 
-            On.RoR2.UI.PauseScreenController.Awake += (orig, self) => {
+            On.RoR2.UI.PauseScreenController.Awake += (orig, self) =>
+            {
                 orig(self);
                 if (Run.instance is null || PreGameController.instance)
                 {
@@ -167,117 +175,131 @@ namespace Booth
 
                 //Add restart button to the pause screen
 
-                Transform restartButton = Instantiate(firstButton, self.mainPanel.GetChild(0));
-
-                TextMeshProUGUI originalRestartText = restartButton.GetComponentInChildren<HGTextMeshProUGUI>();
-                originalRestartText.text = "Restart";
-                //The GUI refuses to update without literally replacing the component
-                Transform originalRestartTextParent = originalRestartText.transform.parent;
-                TextMeshProUGUI newRestartText = Instantiate(originalRestartText, originalRestartTextParent);
-                Destroy(originalRestartText);
-
-                HGButton restartHGButton = restartButton.GetComponent<HGButton>();
-                restartHGButton.onClick = new Button.ButtonClickedEvent();
-                restartHGButton.onClick.AddListener(() => {
-                    Log.Debug("Restarting from button");
-                    BoothUtil.ResetGame(self, ConfigConfirmationDialog.Value, 
-                        ConfigConfirmationDialogSkippedOnFirstStage.Value, this, true);
-                });
-
-                if ("top".Equals(ConfigRestartButtonPosition.Value, StringComparison.InvariantCultureIgnoreCase))
-                {
-                    restartButton.transform.SetAsFirstSibling();
-                }
-                else if ("bottom".Equals(ConfigRestartButtonPosition.Value, StringComparison.InvariantCultureIgnoreCase))
-                {
-                    restartButton.transform.SetAsLastSibling();
-                }
-                else
-                {
-                    try
-                    {
-                        int position = Convert.ToInt32(ConfigRestartButtonPosition.Value);
-                        if (position < 0)
-                        {
-                            position = 0;
-                        }
-                        else if (position >= restartButton.transform.parent.childCount)
-                        {
-                            position = restartButton.transform.parent.childCount - 1;
-                        }
-                        restartButton.transform.SetSiblingIndex(position);
-                    }
-                    catch (FormatException)
-                    {
-                        //default to bottom
-                        restartButton.transform.SetAsLastSibling();
-                    }
-                }
-                
-                if (PlayerCharacterMasterController.instances.Count > 1 && !BoothUtil.IsMultiplayerHost())
-                {
-                    // Disable on multiplayer, unless they are the host
-                    restartButton.gameObject.SetActive(false);
-                }
+                AddRestartButton(self, firstButton);
 
                 //Add Back to Character Select to the pause screen
-
-                Transform characterSelectButton = Instantiate(firstButton, self.mainPanel.GetChild(0));
-
-                TextMeshProUGUI originalCharacterSelectText = characterSelectButton.GetComponentInChildren<HGTextMeshProUGUI>();
-                originalCharacterSelectText.text = "Character Select";
-                //The GUI refuses to update without literally replacing the component
-                Transform originalCharacterSelectTextParent = originalCharacterSelectText.transform.parent;
-                TextMeshProUGUI newCharacterSelectText = Instantiate(originalCharacterSelectText, originalCharacterSelectTextParent);
-                Destroy(originalCharacterSelectText);
-
-                if ("top".Equals(ConfigCharacterButtonPosition.Value, StringComparison.InvariantCultureIgnoreCase))
+                if (!ConfigDisableCharacterSelectButton.Value)
                 {
-                    characterSelectButton.transform.SetAsFirstSibling();
+                    AddCharacterSelectButton(self, firstButton);
                 }
-                else if ("bottom".Equals(ConfigCharacterButtonPosition.Value, StringComparison.InvariantCultureIgnoreCase))
-                {
-                    characterSelectButton.transform.SetAsLastSibling();
-                }
-                else
-                {
-                    try
-                    {
-                        int position = Convert.ToInt32(ConfigCharacterButtonPosition.Value);
-                        if (position < 0)
-                        {
-                            position = 0;
-                        }
-                        else if (position >= characterSelectButton.transform.parent.childCount)
-                        {
-                            position = characterSelectButton.transform.parent.childCount - 1;
-                        }
-                        characterSelectButton.transform.SetSiblingIndex(position);
-                    }
-                    catch (FormatException)
-                    {
-                        //default to bottom
-                        characterSelectButton.transform.SetAsLastSibling();
-                    }
-                }
-
-                if (PlayerCharacterMasterController.instances.Count > 1 && !BoothUtil.IsMultiplayerHost())
-                {
-                    // Disable on multiplayer, unless they are the host
-                    characterSelectButton.gameObject.SetActive(false);
-                }
-
-
-                HGButton characterSelectHGButton = characterSelectButton.GetComponent<HGButton>();
-                characterSelectHGButton.onClick = new Button.ButtonClickedEvent();
-                characterSelectHGButton.onClick.AddListener(() => {
-                    Log.Debug("Returning to Character Select from button");
-                    BoothUtil.ResetGame(self, ConfigConfirmationDialog.Value, 
-                        ConfigConfirmationDialogSkippedOnFirstStage.Value, this, false);
-                });
             };
         }
-        
+
+        private void AddRestartButton(PauseScreenController self, Transform firstButton)
+        {
+            Transform restartButton = Instantiate(firstButton, self.mainPanel.GetChild(0));
+
+            TextMeshProUGUI originalRestartText = restartButton.GetComponentInChildren<HGTextMeshProUGUI>();
+            originalRestartText.text = "Restart";
+            //The GUI refuses to update without literally replacing the component
+            Transform originalRestartTextParent = originalRestartText.transform.parent;
+            TextMeshProUGUI newRestartText = Instantiate(originalRestartText, originalRestartTextParent);
+            Destroy(originalRestartText);
+
+            HGButton restartHGButton = restartButton.GetComponent<HGButton>();
+            restartHGButton.onClick = new Button.ButtonClickedEvent();
+            restartHGButton.onClick.AddListener(() =>
+            {
+                Log.Debug("Restarting from button");
+                BoothUtil.ResetGame(self, ConfigConfirmationDialog.Value,
+                    ConfigConfirmationDialogSkippedOnFirstStage.Value, this, true);
+            });
+
+            if ("top".Equals(ConfigRestartButtonPosition.Value, StringComparison.InvariantCultureIgnoreCase))
+            {
+                restartButton.transform.SetAsFirstSibling();
+            }
+            else if ("bottom".Equals(ConfigRestartButtonPosition.Value, StringComparison.InvariantCultureIgnoreCase))
+            {
+                restartButton.transform.SetAsLastSibling();
+            }
+            else
+            {
+                try
+                {
+                    int position = Convert.ToInt32(ConfigRestartButtonPosition.Value);
+                    if (position < 0)
+                    {
+                        position = 0;
+                    }
+                    else if (position >= restartButton.transform.parent.childCount)
+                    {
+                        position = restartButton.transform.parent.childCount - 1;
+                    }
+                    restartButton.transform.SetSiblingIndex(position);
+                }
+                catch (FormatException)
+                {
+                    //default to bottom
+                    restartButton.transform.SetAsLastSibling();
+                }
+            }
+
+            if (PlayerCharacterMasterController.instances.Count > 1 && !BoothUtil.IsMultiplayerHost())
+            {
+                // Disable on multiplayer, unless they are the host
+                restartButton.gameObject.SetActive(false);
+            }
+        }
+
+        private void AddCharacterSelectButton(PauseScreenController self, Transform firstButton)
+        {
+            Transform characterSelectButton = Instantiate(firstButton, self.mainPanel.GetChild(0));
+
+            TextMeshProUGUI originalCharacterSelectText = characterSelectButton.GetComponentInChildren<HGTextMeshProUGUI>();
+            originalCharacterSelectText.text = "Character Select";
+            //The GUI refuses to update without literally replacing the component
+            Transform originalCharacterSelectTextParent = originalCharacterSelectText.transform.parent;
+            TextMeshProUGUI newCharacterSelectText = Instantiate(originalCharacterSelectText, originalCharacterSelectTextParent);
+            Destroy(originalCharacterSelectText);
+
+            if ("top".Equals(ConfigCharacterButtonPosition.Value, StringComparison.InvariantCultureIgnoreCase))
+            {
+                characterSelectButton.transform.SetAsFirstSibling();
+            }
+            else if ("bottom".Equals(ConfigCharacterButtonPosition.Value, StringComparison.InvariantCultureIgnoreCase))
+            {
+                characterSelectButton.transform.SetAsLastSibling();
+            }
+            else
+            {
+                try
+                {
+                    int position = Convert.ToInt32(ConfigCharacterButtonPosition.Value);
+                    if (position < 0)
+                    {
+                        position = 0;
+                    }
+                    else if (position >= characterSelectButton.transform.parent.childCount)
+                    {
+                        position = characterSelectButton.transform.parent.childCount - 1;
+                    }
+                    characterSelectButton.transform.SetSiblingIndex(position);
+                }
+                catch (FormatException)
+                {
+                    //default to bottom
+                    characterSelectButton.transform.SetAsLastSibling();
+                }
+            }
+
+            if (PlayerCharacterMasterController.instances.Count > 1 && !BoothUtil.IsMultiplayerHost())
+            {
+                // Disable on multiplayer, unless they are the host
+                characterSelectButton.gameObject.SetActive(false);
+            }
+
+
+            HGButton characterSelectHGButton = characterSelectButton.GetComponent<HGButton>();
+            characterSelectHGButton.onClick = new Button.ButtonClickedEvent();
+            characterSelectHGButton.onClick.AddListener(() =>
+            {
+                Log.Debug("Returning to Character Select from button");
+                BoothUtil.ResetGame(self, ConfigConfirmationDialog.Value,
+                    ConfigConfirmationDialogSkippedOnFirstStage.Value, this, false);
+            });
+        }
+
         public static ConfigEntry<string> ConfigRestartButtonPosition { get; set; }
         public static ConfigEntry<string> ConfigCharacterButtonPosition { get; set; }
         public static ConfigEntry<bool> ConfigResetKeyEnabled { get; set; }
@@ -285,6 +307,7 @@ namespace Booth
         public static ConfigEntry<float> ConfigResetKeyHoldTime { get; set; }
         public static ConfigEntry<bool> ConfigConfirmationDialog { get; set; }
         public static ConfigEntry<bool> ConfigConfirmationDialogSkippedOnFirstStage { get; set; }
+        public static ConfigEntry<bool> ConfigDisableCharacterSelectButton { get; set; }
 
         private static KeyCode ResetKeyCode = KeyCode.T;
         private float TimeSpentHoldingKey = 0f;

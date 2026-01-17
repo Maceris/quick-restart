@@ -3,6 +3,10 @@ The quick restart mod adds a button to the pause menu that allows you to start a
 
 # Changelog
 
+**1.6.1**
+
+* Add an option for disabling the character select button
+
 **1.6.0**
 
 * Add an option for skipping the confirmation dialog on the first stage
